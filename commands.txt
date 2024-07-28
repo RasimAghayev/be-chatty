@@ -67,3 +67,5 @@ npx npm-check-updates -u
 npm install
 
 npm i cloudinary
+
+npm i joi
