@@ -1,0 +1,33 @@
+npm init -y
+
+npm i typescript
+
+npx tsc  --init
+
+npm i express
+
+npm i --save-dev @types/express
+
+npm i cors helmet hpp cookie-session compression express-async-errors http-status-codes
+
+npm i --save-dev @types/cors @types/hpp @types/cookie-session @types/compression
+
+npm i -g nodemon
+
+npm i -D ts-node
+
+npm run dev
+
+npm i --save-dev tsconfig-paths
+
+npm i mongoose
+
+npm i dotenv
+
+npm i socket.io redis @socket.io/redis-adapter
+
+npm i bunyan
+
+npm i --save-dev @types/bunyan
+
+npm i -D eslint eslint-config-prettier prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser
