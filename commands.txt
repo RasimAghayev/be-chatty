@@ -53,3 +53,15 @@ git checkout develop
 npm i typescript typescript-transform-paths
 
 
+    // "build": "npx ttsc -p ."
+npm install --save-dev tsc-alias
+
+# npm i --save-dev @types/redis-info
+
+
+npm i -g npm-check-updates
+ncu -u
+npm install
+
+npx npm-check-updates -u
+npm install
