@@ -31,3 +31,25 @@ npm i bunyan
 npm i --save-dev @types/bunyan
 
 npm i -D eslint eslint-config-prettier prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser
+
+git init
+
+git add -A
+
+git status
+
+git commit -m "Setup project" -m "Setup project first level"
+
+git branch -M main
+
+git remote add origin https://github.com/RasimAghayev/be-chatty.git
+
+git push -u origin main
+
+git fetch
+
+git checkout develop
+
+npm i typescript typescript-transform-paths
+
+

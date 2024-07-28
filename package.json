@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "main": "app.ts",
   "scripts": {
+    "start": "nodemon ./build/app.js",
     "dev:mac": "nodemon -r tsconfig-paths/register src/app.ts | ./node_modules/.bin/bunyan",
     "dev": "nodemon -r tsconfig-paths/register src/app.ts | bunyan",
     "lint:check": "eslint src/**/*.{ts,tsx}",
     "lint:fix": "eslint --fix src/**/*.{ts,tsx}",
     "prettier:check": "prettier --check 'src/**/*.{ts,json}'",
-    "prettier:fix": "prettier --write 'src/**/*.{ts,json}'"
+    "prettier:fix": "prettier --write 'src/**/*.{ts,json}'",
+    "build": "npx ttsc -p ."
   },
   "keywords": [],
   "author": "Rasim Aghayev <rasimaqayev@gmail.com>",
@@ -29,7 +31,8 @@
     "mongoose": "^8.5.1",
     "redis": "^4.6.15",
     "socket.io": "^4.7.5",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "typescript-transform-paths": "^3.4.7"
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.11",
