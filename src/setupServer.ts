@@ -11,9 +11,9 @@ import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
 import Logger from 'bunyan';
 import 'express-async-errors';
-import { config } from './config';
-import applicationRoutes from './routes';
-import { CustomError, IErrorResponse } from './shared/globals/helpers/error-handler';
+import { config } from '@root/config';
+import applicationRoutes from '@root/routes';
+import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
 
 const log: Logger = config.createLogger('setupServer');
 export class ChattyServer {
@@ -81,7 +81,7 @@ export class ChattyServer {
       const httpServer: http.Server = new http.Server(app);
       const socketIO: Server = await this.createSocketIO(httpServer);
       this.startHttpServer(httpServer);
-      this.socketIOConnections(socketIO, null);
+      this.socketIOConnections(socketIO);
     } catch (error) {
       log.error(error);
     }
@@ -101,7 +101,9 @@ export class ChattyServer {
     return io;
   }
 
-  private socketIOConnections(socketIO: Server, socket: any): void {}
+  private socketIOConnections(io: Server): void {
+    log.info(`SocketIOConnections ${io}`);
+  }
 
   private startHttpServer(httpServer: http.Server): void {
     log.info(`Server has started with process id: ${process.pid}`);
