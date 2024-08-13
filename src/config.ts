@@ -50,32 +50,32 @@ class Config {
       name,
       src: false,
       level: 'debug',
-      streams: [
-        {
-          path: './logs/all.log',
-          type: 'rotating-file',
-          period: '1d', // daily rotation
-          count: 3, // keep 3 back copies
-        },
-        {
-          level: 'info',
-          stream: process.stdout, // log INFO and above to stdout
-        },
-        {
-          level: 'error',
-          path: './logs/error.log', // log ERROR and above to a file
-          type: 'rotating-file',
-          period: '1d', // daily rotation
-          count: 3, // keep 3 back copies
-        },
-        {
-          level: 'warn',
-          path: './logs/warning.log', // log ERROR and above to a file
-          type: 'rotating-file',
-          period: '1d', // daily rotation
-          count: 3, // keep 3 back copies
-        },
-      ],
+      // streams: [
+      //   {
+      //     path: './logs/all.log',
+      //     type: 'rotating-file',
+      //     // period: '1d', // daily rotation
+      //     // count: 3, // keep 3 back copies
+      //   },
+      //   {
+      //     level: 'info',
+      //     stream: process.stdout, // log INFO and above to stdout
+      //   },
+      //   {
+      //     level: 'error',
+      //     path: './logs/error.log', // log ERROR and above to a file
+      //     type: 'rotating-file',
+      //     // period: '1d', // daily rotation
+      //     // count: 3, // keep 3 back copies
+      //   },
+      //   {
+      //     level: 'warn',
+      //     path: './logs/warning.log', // log ERROR and above to a file
+      //     type: 'rotating-file',
+      //     // period: '1d', // daily rotation
+      //     // count: 3, // keep 3 back copies
+      //   },
+      // ],
     });
   }
   public validateConfig(): void {
