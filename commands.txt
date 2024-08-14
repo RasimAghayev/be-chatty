@@ -86,3 +86,8 @@ npm i -D @types/bull
 
 npm i @bull-board/express @bull-board/ui
 
+npm i nodemailer @sendgrid/mail ejs
+
+npm i --save-dev @types/nodemailer
+
+
