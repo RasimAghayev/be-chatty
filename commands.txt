@@ -90,4 +90,5 @@ npm i nodemailer @sendgrid/mail ejs
 
 npm i --save-dev @types/nodemailer
 
+npm i --save-dev @types/ejs
 
