@@ -23,7 +23,7 @@ withCredentials: true
 
 {
   "username":"123asd",
-  "password":"qwertyg"
+  "password":"qwerty"
 }
 
 ###
@@ -37,3 +37,24 @@ GET {{baseUrl}}/{{urlPath}}/me
 Content-Type: application/json
 Accept: application/json
 withCredentials: true
+
+###
+POST {{baseUrl}}/{{urlPath}}/forgot-password
+Content-Type: application/json
+Accept: application/json
+withCredentials: true
+
+{
+  "email":"123asd1@test.com"
+}
+
+###
+POST {{baseUrl}}/{{urlPath}}/reset-password/55bfe886489db0086a8a170f89253e11e99f5290
+Content-Type: application/json
+Accept: application/json
+withCredentials: true
+
+{
+  "password":"qwerty",
+  "confirmPassword":"qwerty"
+}
