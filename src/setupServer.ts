@@ -101,10 +101,21 @@ export class ChattyServer {
     return io;
   }
 
-  private socketIOConnections(io: Server): void {
-    log.info(`SocketIOConnections ${io}`);
+  private getCircularReplacer() {
+    const seen = new WeakSet();
+    return (key: any, value: any) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return; // Discard the circular reference
+        }
+        seen.add(value);
+      }
+      return value;
+    };
   }
-
+  private socketIOConnections(io: Server): void {
+    log.info(`SocketIOConnections ${JSON.stringify(io, this.getCircularReplacer())}`);
+  }
   private startHttpServer(httpServer: http.Server): void {
     log.info(`Server has started with process id: ${process.pid}`);
     httpServer.listen(config.SERVER_PORT, () => {
