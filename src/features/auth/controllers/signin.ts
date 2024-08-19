@@ -46,19 +46,19 @@ export class SignIn {
       ipaddress: publicIP.address(),
       date: dayjs().format('DD/MM/YYYY HH:mm:ss'),
     };
-    const resetLink = `${config.CLIENT_URL}/reset-password?token=${userJwt}`;
-    const template1: string = forgotPasswordTemplate.forgotPasswordConfirmationTemplate(existingUser.username!, resetLink);
-    const template2: string = resetPasswordTemplate.passwordResetConfirmationTemplate(templateParams);
-    emailQueue.addEmailJob('forgotPasswordEmail', {
-      template: template1,
-      receiverEmail: 'daphney19@ethereal.email',
-      subject: 'forgotPasswordEmailTemplate',
-    });
-    emailQueue.addEmailJob('forgotPasswordEmail', {
-      template: template2,
-      receiverEmail: 'daphney19@ethereal.email',
-      subject: 'passwordResetConfirmationTemplate',
-    });
+    // const resetLink = `${config.CLIENT_URL}/reset-password?token=${userJwt}`;
+    // const template1: string = forgotPasswordTemplate.forgotPasswordConfirmationTemplate(existingUser.username!, resetLink);
+    // const template2: string = resetPasswordTemplate.passwordResetConfirmationTemplate(templateParams);
+    // emailQueue.addEmailJob('forgotPasswordEmail', {
+    //   template: template1,
+    //   receiverEmail: 'daphney19@ethereal.email',
+    //   subject: 'forgotPasswordEmailTemplate',
+    // });
+    // emailQueue.addEmailJob('forgotPasswordEmail', {
+    //   template: template2,
+    //   receiverEmail: 'daphney19@ethereal.email',
+    //   subject: 'passwordResetConfirmationTemplate',
+    // });
 
     req.session = { jwt: userJwt };
     const userDocument: IUserDocument = {
