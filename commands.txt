@@ -6,11 +6,11 @@ npx tsc  --init
 
 npm i express
 
-npm i --save-dev @types/express
+npm i -D @types/express
 
 npm i cors helmet hpp cookie-session compression express-async-errors http-status-codes
 
-npm i --save-dev @types/cors @types/hpp @types/cookie-session @types/compression
+npm i -D @types/cors @types/hpp @types/cookie-session @types/compression
 
 npm i -g nodemon
 
@@ -18,7 +18,7 @@ npm i -D ts-node
 
 npm run dev
 
-npm i --save-dev tsconfig-paths
+npm i -D tsconfig-paths
 
 npm i mongoose
 
@@ -28,7 +28,7 @@ npm i socket.io redis @socket.io/redis-adapter
 
 npm i bunyan
 
-npm i --save-dev @types/bunyan
+npm i -D @types/bunyan
 
 npm i -D eslint eslint-config-prettier prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser
 
@@ -54,17 +54,17 @@ npm i typescript typescript-transform-paths
 
 
     // "build": "npx ttsc -p ."
-npm install --save-dev tsc-alias
+npm i -D tsc-alias
 
-# npm i --save-dev @types/redis-info
+# npm i -D @types/redis-info
 
 
 npm i -g npm-check-updates
 ncu -u
-npm install
+npm i
 
 npx npm-check-updates -u
-npm install
+npm i
 
 npm i cloudinary
 
@@ -78,7 +78,7 @@ npm i -D @types/bcryptjs
 
 npm i jsonwebtoken lodash
 
-npm i --save-dev  @types/jsonwebtoken @types/lodash
+npm i -D  @types/jsonwebtoken @types/lodash
 
 npm i bull
 
@@ -88,10 +88,16 @@ npm i @bull-board/express @bull-board/ui
 
 npm i nodemailer @sendgrid/mail ejs
 
-npm i --save-dev @types/nodemailer
+npm i -D @types/nodemailer
 
-npm i --save-dev @types/ejs
+npm i -D @types/ejs
 
 npm i dayjs ip
 
-npm i --save-dev @types/ip
+npm i -D @types/ip
+
+npm i -D jest
+
+npm i @types/jest @jest/types
+
+npm i -D ts-jest
