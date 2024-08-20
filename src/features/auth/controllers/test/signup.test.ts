@@ -15,10 +15,12 @@ jest.mock('@service/queues/auth.queue');
 jest.mock('@global/helpers/cloudinary-upload');
 
 describe('SignUp', () => {
+  //Reset all mocks
   beforeEach(() => {
     jest.resetAllMocks();
   });
 
+  //Clear all mocks
   afterEach(() => {
     jest.clearAllMocks();
     jest.clearAllTimers();
