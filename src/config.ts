@@ -16,6 +16,12 @@ class Config {
   public CLOUD_NAME: string | undefined;
   public CLOUD_API_KEY: string | undefined;
   public CLOUD_API_SECRET: string | undefined;
+  public SENDER_HOST: string | undefined;
+  public SENDER_PORT: number | undefined;
+  public SENDER_EMAIL: string | undefined;
+  public SENDER_EMAIL_PASSWORD: string | undefined;
+  public SENDERGRID_API_KEY: string | undefined;
+  public SENDERGRID_SENDER: string | undefined;
 
   private readonly DEFAULT_SERVER_PORT: number = Number(process.env.SERVER_PORT) || 5000;
   private readonly DEFAULT_NODE_ENV: string = process.env.NODE_ENV || 'development';
@@ -31,6 +37,13 @@ class Config {
   private readonly DEFAULT_CLOUD_NAME: string = process.env.CLOUD_NAME || '';
   private readonly DEFAULT_CLOUD_API_KEY: string = process.env.CLOUD_API_KEY || '';
   private readonly DEFAULT_CLOUD_API_SECRET: string = process.env.CLOUD_API_SECRET || '';
+
+  private readonly DEFAULT_SENDER_HOST: string = process.env.SENDER_HOST || '';
+  private readonly DEFAULT_SENDER_PORT: number = Number(process.env.SENDER_PORT) || 587;
+  private readonly DEFAULT_SENDER_EMAIL: string = process.env.SENDER_EMAIL || '';
+  private readonly DEFAULT_SENDER_EMAIL_PASSWORD: string = process.env.SENDER_EMAIL_PASSWORD || '';
+  private readonly DEFAULT_SENDERGRID_API_KEY: string = process.env.SENDERGRID_API_KEY || '';
+  private readonly DEFAULT_SENDERGRID_SENDER: string = process.env.SENDERGRID_SENDER || '';
   constructor() {
     this.SERVER_PORT = this.DEFAULT_SERVER_PORT;
     this.DATABASE_URL = this.DEFAULT_DATABASE_URL;
@@ -43,6 +56,12 @@ class Config {
     this.CLOUD_NAME = this.DEFAULT_CLOUD_NAME;
     this.CLOUD_API_KEY = this.DEFAULT_CLOUD_API_KEY;
     this.CLOUD_API_SECRET = this.DEFAULT_CLOUD_API_SECRET;
+    this.SENDER_HOST = this.DEFAULT_SENDER_HOST;
+    this.SENDER_PORT = this.DEFAULT_SENDER_PORT;
+    this.SENDER_EMAIL = this.DEFAULT_SENDER_EMAIL;
+    this.SENDER_EMAIL_PASSWORD = this.DEFAULT_SENDER_EMAIL_PASSWORD;
+    this.SENDERGRID_API_KEY = this.DEFAULT_SENDERGRID_API_KEY;
+    this.SENDERGRID_SENDER = this.DEFAULT_SENDERGRID_SENDER;
   }
 
   public createLogger(name: string): bunyan {
