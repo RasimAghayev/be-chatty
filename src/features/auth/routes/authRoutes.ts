@@ -21,7 +21,7 @@ class AuthRoutes {
   }
 
   public signOutRouter(): Router {
-    this.router.get('/signout', Signout.prototype.udpate);
+    this.router.get('/signout', Signout.prototype.update);
     return this.router;
   }
 }
