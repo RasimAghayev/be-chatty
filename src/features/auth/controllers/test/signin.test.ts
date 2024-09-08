@@ -94,16 +94,23 @@ describe('SignIn', () => {
     });
   });
 
-  it('should throw "Invalid credentials" if password does not exist', () => {
-    const req: Request = authMockRequest({}, { username: USERNAME, password: PASSWORD }) as Request;
+  it('should throw "Invalid credentials" if password does not match', async () => {
+    const req: Request = authMockRequest({}, { username: USERNAME, password: `${PASSWORD}2` }) as Request;
     const res: Response = authMockResponse();
-    jest.spyOn(authService, 'getAuthUserByUsername').mockResolvedValueOnce(null as any);
 
-    SignIn.prototype.read(req, res).catch((error: CustomError) => {
-      expect(authService.getAuthUserByUsername).toHaveBeenCalledWith(Helpers.firstLetterUppercase(req.body.username));
-      expect(error.statusCode).toEqual(400);
-      expect(error.serializeErrors().message).toEqual('Invalid credentials');
-    });
+    // Mock `authService.getAuthUserByUsername` to return a user object
+    const mockUser = {
+      username: USERNAME,
+      comparePassword: jest.fn().mockResolvedValue(false), // Simulate a password mismatch
+    };
+
+    jest.spyOn(authService, 'getAuthUserByUsername').mockResolvedValueOnce(mockUser as any);
+
+    // Create an instance of SignIn and call `read` method
+    // await expect(SignIn.prototype.read(req, res)).rejects.toThrowError(new BadRequestError('Invalid credentials'));
+    await expect(SignIn.prototype.read(req, res)).rejects.toThrow('Invalid credentials');
+    // Assertions
+    expect(authService.getAuthUserByUsername).toHaveBeenCalledWith(Helpers.firstLetterUppercase(req.body.username));
   });
 
   it('should set session data for valid credentials and send correct json response', async () => {
