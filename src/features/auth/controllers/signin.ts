@@ -9,11 +9,11 @@ import { loginSchema } from '@auth/schemes/signin';
 import { IAuthDocument } from '@auth/interfaces/auth.interface';
 import { IResetPasswordParams, IUserDocument } from '@user/interfaces/user.interface';
 import { userService } from '@service/db/user.service';
-import { emailQueue } from '@service/queues/email.queue';
+// import { emailQueue } from '@service/queues/email.queue';
 import publicIP from 'ip';
 import dayjs from 'dayjs';
-import { forgotPasswordTemplate } from '@service/emails/templates/forgot-password/forgot-password-template';
-import { resetPasswordTemplate } from '@service/emails/templates/reset-password/reset-password-template';
+// import { forgotPasswordTemplate } from '@service/emails/templates/forgot-password/forgot-password-template';
+// import { resetPasswordTemplate } from '@service/emails/templates/reset-password/reset-password-template';
 
 export class SignIn {
   @joiValidation(loginSchema)
