@@ -30,9 +30,10 @@ class Config {
   private readonly DEFAULT_SECRET_KEY_ONE: string = process.env.SECRET_KEY_ONE || 'ThisIsaSecretCookieKeyOne';
   private readonly DEFAULT_SECRET_KEY_TWO: string = process.env.SECRET_KEY_TWO || 'ThisIsaSecretCookieKeyTwo';
 
-  private readonly DEFAULT_DATABASE_URL: string = process.env.DATABASE_URL || 'mongodb://root:root@localhost:27017/';
+  private readonly DEFAULT_DATABASE_URL: string =
+    process.env.DATABASE_URL || 'mongodb://root:root@localhost:27017/chattyapp?authSource=admin';
   private readonly DEFAULT_CLIENT_URL: string = process.env.CLIENT_URL || 'http://localhost:3000';
-  private readonly DEFAULT_REDIS_URL: string = process.env.REDIS_URL || 'http://localhost:3000';
+  private readonly DEFAULT_REDIS_URL: string = process.env.REDIS_URL || 'redis://default:eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81@localhost:6379';
 
   private readonly DEFAULT_CLOUD_NAME: string = process.env.CLOUD_NAME || '';
   private readonly DEFAULT_CLOUD_API_KEY: string = process.env.CLOUD_API_KEY || '';

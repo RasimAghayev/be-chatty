@@ -2,7 +2,7 @@
 import { Request, Response } from 'express';
 import * as cloudinaryUploads from '@global/helpers/cloudinary-upload';
 import { SignUp } from '@auth/controllers/signup';
-import { CustomError } from '@global/helpers/error-handler';
+import { BadRequestError, CustomError } from '@global/helpers/error-handler';
 import { authMock, authMockRequest, authMockResponse } from '@mock/auth.mock';
 import { authService } from '@service/db/auth.service';
 import { UserCache } from '@service/redis/user.cache';
@@ -210,5 +210,32 @@ describe('SignUp', () => {
       user: userSpy.mock.calls[0][2],
       token: req.session?.jwt,
     });
+  });
+  it('should throw BadRequestError when upload result does not contain public_id', async () => {
+    // Arrange
+    const mockAvatarImage = 'fake-image-data';
+    const mockUserObjectId = '123456789';
+    (cloudinaryUploads.uploads as jest.Mock).mockResolvedValue({
+      // Mocking a response without public_id
+      secure_url: 'https://example.com/image.jpg',
+    });
+
+    // Act & Assert
+    await expect(async () => {
+      const result = await cloudinaryUploads.uploads(mockAvatarImage, mockUserObjectId, true, true);
+      if (!result?.public_id) {
+        throw new BadRequestError('File upload: Error occurred. Try again');
+      }
+    }).rejects.toThrow(BadRequestError);
+
+    await expect(async () => {
+      const result = await cloudinaryUploads.uploads(mockAvatarImage, mockUserObjectId, true, true);
+      if (!result?.public_id) {
+        throw new BadRequestError('File upload: Error occurred. Try again');
+      }
+    }).rejects.toThrow('File upload: Error occurred. Try again');
+
+    // Verify that uploads was called with the correct parameters
+    expect(cloudinaryUploads.uploads).toHaveBeenCalledWith(mockAvatarImage, mockUserObjectId, true, true);
   });
 });

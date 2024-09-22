@@ -18,7 +18,7 @@ const authSchema: Schema = new Schema(
   {
     toJSON: {
       transform(_doc, ret) {
-        delete ret.password;
+        delete ret.password; // Remove password from output
         return ret;
       },
     },
@@ -26,19 +26,22 @@ const authSchema: Schema = new Schema(
 );
 
 authSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
-  const hashedPassword: string = await hash(this.password as string, SALT_ROUND);
-  this.password = hashedPassword;
+  if (this.isModified('password')) {
+    // Hash password only if it's been modified
+    this.password = await hash(this.password as string, SALT_ROUND);
+  }
   next();
 });
 
 authSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
-  const hashedPassword: string = (this as unknown as IAuthDocument).password!;
-  return compare(password, hashedPassword);
+  return compare(password, this.password as string);
 };
 
 authSchema.methods.hashPassword = async function (password: string): Promise<string> {
   return hash(password, SALT_ROUND);
 };
 
-const AuthModel: Model<IAuthDocument> = model<IAuthDocument>('Auth', authSchema, 'Auth');
+// No need to specify collection name explicitly
+const AuthModel: Model<IAuthDocument> = model<IAuthDocument>('Auth', authSchema);
+
 export { AuthModel };
