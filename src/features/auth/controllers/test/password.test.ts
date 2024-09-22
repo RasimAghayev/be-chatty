@@ -77,7 +77,13 @@ describe('Password', () => {
       });
     });
     it('should throw an error if password and confirmPassword are different', () => {
-      const req: Request = authMockRequest({}, { password: CORRECT_PASSWORD, confirmPassword: `${CORRECT_PASSWORD}2` }) as Request;
+      const req: Request = authMockRequest(
+        {},
+        {
+          password: CORRECT_PASSWORD,
+          confirmPassword: `${CORRECT_PASSWORD}2`,
+        }
+      ) as Request;
       const res: Response = authMockResponse();
       Password.prototype.update(req, res).catch((error: CustomError) => {
         expect(error.statusCode).toEqual(400);
