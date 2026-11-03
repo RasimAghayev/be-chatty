@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import { loginSchema } from '@auth/schemes/signin';
 
 describe('loginSchema', () => {

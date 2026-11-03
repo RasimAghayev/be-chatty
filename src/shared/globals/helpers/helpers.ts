@@ -34,7 +34,7 @@ export class Helpers {
     }
 
     try {
-      return JSON.parse(jsonString); // eslint-disable-line @typescript-eslint/no-unsafe-return
+      return JSON.parse(jsonString);
     } catch {
       // TODO: Use a logger to log the invalid JSON string
       return jsonString;

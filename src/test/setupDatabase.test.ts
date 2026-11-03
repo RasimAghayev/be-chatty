@@ -13,7 +13,7 @@ const mockLogger = {
   warn: jest.fn(),
 };
 
-(config as any).createLogger = jest.fn(() => mockLogger as any);
+(config as unknown as { createLogger: jest.Mock }).createLogger = jest.fn(() => mockLogger as unknown as Logger);
 
 describe('setupDatabase', () => {
   beforeEach(() => {
