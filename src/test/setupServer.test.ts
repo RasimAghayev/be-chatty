@@ -6,7 +6,6 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import Logger from 'bunyan';
 import { config } from '@root/config';
 import { ChattyServer } from '@root/setupServer';
-import { server } from 'typescript';
 
 // Mocks
 jest.mock('http');
@@ -21,7 +20,7 @@ jest.mock('@root/routes');
 const mockListen = jest.fn();
 const mockCreateServer = jest.fn().mockReturnValue({
   listen: mockListen,
-} as any);
+} as unknown as http.Server);
 
 const mockSocketIO = {} as Server;
 const mockCreateSocketIO = jest.fn().mockResolvedValue(mockSocketIO);
@@ -41,9 +40,9 @@ const mockLog = {
 } as unknown as Logger;
 
 (http.createServer as jest.Mock) = mockCreateServer;
-(Server as unknown as jest.Mock) = jest.fn().mockReturnValue(mockSocketIO);
-(createClient as jest.Mock) = mockCreateClient;
-(createAdapter as jest.Mock) = mockCreateAdapter;
+(Server as unknown as jest.Mock).mockImplementation(() => mockSocketIO);
+(createClient as jest.Mock).mockImplementation(mockCreateClient);
+(createAdapter as jest.Mock).mockImplementation(mockCreateAdapter);
 (config.createLogger as jest.Mock) = jest.fn().mockReturnValue(mockLog);
 
 describe('ChattyServer', () => {
@@ -73,7 +72,9 @@ describe('ChattyServer', () => {
 
     (Server as unknown as jest.Mock).mockReturnValue(mockSocketIO);
 
-    await (server as any)['createSocketIO'](mockHttpServer);
+    await (chattyServer as unknown as { createSocketIO: (httpServer: http.Server) => Promise<Server> })[
+      'createSocketIO'
+    ](mockHttpServer);
 
     expect(Server).toHaveBeenCalledWith(mockHttpServer, expect.any(Object));
     expect(mockSocketIO.adapter).toHaveBeenCalled();
