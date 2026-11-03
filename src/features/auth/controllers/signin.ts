@@ -40,6 +40,7 @@ export class SignIn {
       },
       config.JWT_TOKEN!
     );
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- only consumed by the commented-out email-confirmation block below
     const templateParams: IResetPasswordParams = {
       username: existingUser.username!,
       email: existingUser.email!,

@@ -103,7 +103,8 @@ export class ChattyServer {
 
   private getCircularReplacer() {
     const seen = new WeakSet();
-    return (key: any, value: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSON.stringify's replacer signature requires `value: any`
+    return (key: string, value: any) => {
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {
           return; // Discard the circular reference

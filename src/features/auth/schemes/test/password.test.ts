@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import { emailSchema, passwordSchema } from '@auth/schemes/password';
 
 describe('Validation Schemas', () => {
