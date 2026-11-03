@@ -10,6 +10,7 @@ jest.mock('@worker/auth.worker', () => ({
 }));
 
 describe('AuthQueue', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jest.spyOn can't target BaseQueue's protected methods through its real type
   let baseQueuePrototype: any;
 
   beforeAll(() => {
@@ -34,7 +35,7 @@ describe('AuthQueue', () => {
     const processJobSpy = jest.spyOn(baseQueuePrototype, 'processJob');
 
     // Initialize a new instance of AuthQueue to trigger processJob
-    const newAuthQueue = new AuthQueue();
+    new AuthQueue();
 
     expect(processJobSpy).toHaveBeenCalledWith('addAuthUserToDB', 5, authWorker.addAuthUserToDB);
   });
