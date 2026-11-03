@@ -72,9 +72,7 @@ describe('ChattyServer', () => {
 
     (Server as unknown as jest.Mock).mockReturnValue(mockSocketIO);
 
-    await (chattyServer as unknown as { createSocketIO: (httpServer: http.Server) => Promise<Server> })[
-      'createSocketIO'
-    ](mockHttpServer);
+    await (chattyServer as unknown as { createSocketIO: (httpServer: http.Server) => Promise<Server> })['createSocketIO'](mockHttpServer);
 
     expect(Server).toHaveBeenCalledWith(mockHttpServer, expect.any(Object));
     expect(mockSocketIO.adapter).toHaveBeenCalled();
