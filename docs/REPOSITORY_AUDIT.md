@@ -22,7 +22,17 @@ Only one workflow exists: `.github/workflows/codeql.yml`, GitHub's auto-generate
 
 ## Tests
 
-`npm test` (Jest + ts-jest, `mongodb-memory-server` for in-memory Mongo) actually executed: **14 of 18 test suites failed, 9 of 38 individual tests failed** (29 passed). Coverage on what did run: 30.4% statements, 17.3% functions. Root cause of the failures is the same missing-module issue as the build (see Dependencies/Code below) — `ts-jest` type-checks on collection, so the unresolved `@service/db/*` imports fail the same way in tests as in `tsc`. Running the suite also triggers a real ~600MB MongoDB binary download via `mongodb-memory-server` on a cold cache — slow but not a defect, just worth knowing before re-running this repeatedly in CI.
+Original baseline: **14 of 18 test suites failed, 9 of 38 individual tests failed** (29 passed), all attributed at the time to the missing `@service/db/*` modules (`ts-jest` type-checks on collection, so the build errors surfaced identically in tests).
+
+**After the Phase 3 hygiene fixes** (see `docs/TECHNICAL_DEBT.md`), re-running revealed a more complex picture than "fix the build and tests follow": excluding the one Mongo-dependent suite (which can't run at all in this sandbox — see below), **29 of 31 runnable tests still pass** (the same 29 as the original baseline — nothing regressed) but several suites now crash for reasons unrelated to the missing service layer:
+- `auth.schema.test.ts` (the only suite needing a real in-memory Mongo): `mongodb-memory-server`'s mongod binary fails to spawn (`spawn EFTYPE`), likely tied to its postinstall script being blocked earlier by npm's script-allowlist protection. The ~600MB binary download itself does complete (confirmed over a ~4 minute run), so this is specifically a binary-execution problem, not a download problem.
+- `setupServer.test.ts`: crashes at import time inside `depd`/`express` internals (`TypeError: argument fn must be a function`).
+- `auth.queue.test.ts` and other queue tests: crash the Jest worker process entirely (`msgpackr`/`bull`: `RangeError: length is outside of buffer bounds`).
+- Two smaller, independent pre-existing test-design bugs: a `mongoose` auto-mock missing `.connection.on` (`setupDatabase.test.ts`), and a bad assertion in `app.test.ts`.
+
+Root cause of the three crash-level issues: this repo has no `engines` field or `.nvmrc`, and was almost certainly built against Node 18/20 (course-era, 2024); the local environment runs Node v26.12.1. This was always true — it was simply invisible while lint and build were both completely broken, since no suite ever got far enough to hit it. Confirmed out of scope for this hygiene pass by the repo owner (2026-11-03); tracked as `TECHNICAL_DEBT.md` #13.
+
+While fixing the four build-blocking root causes, two additional, genuine (and previously undetectable) bugs were found and fixed along the way: a typo'd import (`@worker/authWorker` instead of `@worker/auth.worker`) in `auth.worker.test.ts`, and `setupServer.test.ts` importing `server` from the `typescript` npm package instead of using the `chattyServer` instance under test (plus a `no-import-assign` bug in the same file's mock setup).
 
 ## Configuration / secrets handling
 
@@ -43,11 +53,14 @@ Only one workflow exists: `.github/workflows/codeql.yml`, GitHub's auto-generate
 
 ## Dependencies
 
-- **`npm ci` fails outright**: `package-lock.json` is out of sync with `package.json` (missing 4 `@typescript-eslint/*`-related lockfile entries). `npm install` works around it but this means no fresh clone has been able to do a clean, reproducible install for some time.
-- **`npm run build` fails** with 17 TypeScript errors across 14 files: 9 are the missing `@service/db/{auth,user}.service` modules (see `ARCHITECTURE.md`); 1 is `@types/express ^5.0.0` installed against `express ^4.21.1` (type-only major-version mismatch breaking the error-handler middleware overload in `setupServer.ts`); 1 is a duplicate-nested-dependency type conflict between `@bull-board/express`'s internal `@bull-board/api` and the top-level one (`base.queue.ts`); the rest cascade from test files importing the same missing modules, plus `supertest` being used in `src/test/routes.test.ts` without being declared in `package.json` at all.
-- **`npm run lint:check` cannot run**: `eslint: ^9.0.0` resolves to ESLint v9.x, which requires flat-config `eslint.config.js` and no longer reads the repo's `.eslintrc.json`. Lint has produced zero signal for however long this version drift has existed.
-- **48 open `npm audit` vulnerabilities** (3 critical, 20 high, 9 moderate, 16 low) locally as of this audit; GitHub's own Dependabot dashboard reports **134** (2 critical, 64 high, 58 moderate, 10 low) on `develop` — the same kind of GitHub-advisory-count vs. npm-package-count discrepancy documented for repo #1 (`TECHNICAL_DEBT.md` #16 there), not evaluated further here since dependency triage is deferred (see below).
-- **16 open bot PRs** (14 Renovate, 1 Dependabot `npm_and_yarn`, 1 more), several well over a year stale — oldest dated 2024-11-20, over a year before this audit. None reviewed/merged yet.
-- **1 open human-authored issue** (#3 by number, "Optimize tsconfig.json", opened 2024-09-27 by the repo owner) proposing a stricter `tsconfig.json` rewrite — a legitimate standing TODO, not bot noise.
+Original baseline (before the approved Phase 2.6 hygiene/config pass):
+- `npm ci` failed outright (lockfile desync), `npm run build` failed with 17 TS errors across 14 files (4 distinct root causes), `npm run lint:check` couldn't run at all (ESLint v9/v8 config drift), 48 local `npm audit` vulnerabilities (3 critical, 20 high, 9 moderate, 16 low) vs. GitHub's own count of 134 (2 critical, 64 high, 58 moderate, 10 low) — the same kind of advisory-count-vs-package-count discrepancy documented for repo #1.
 
-Given the scope and nature of the build-breaking findings (a missing implementation layer, not just outdated packages), dependency triage for this repo should wait until the central question in `projects/info/be-chatty.md` ("Key open decision") is resolved — merging any of the 16 PRs onto a codebase that doesn't currently build wouldn't produce a meaningful CI signal either way.
+**After the hygiene/config fixes** (full detail in `docs/TECHNICAL_DEBT.md`):
+- `npm ci` now succeeds cleanly from a fresh clone (verified: `rm -rf node_modules && npm ci`).
+- `npm run build`: down to exactly **13 errors in 11 files**, all `Cannot find module '@service/db/{auth,user}.service'` — the one gap left by design (hygiene-only scope, not implementing new business logic). The other 3 root causes (`@types/express` major mismatch, `@bull-board` duplicate-nested-type conflict, missing `supertest`) are fixed and verified.
+- `npm run lint:check`: **0 errors** (verified). Migrating to flat-config also surfaced 23 real, previously-invisible lint violations across the codebase (unused vars/imports, unsafe `any`, a `no-import-assign` bug in a test's mock setup) — all fixed, zero behavior change confirmed by re-running the build after each.
+- `npm audit`: **46 vulnerabilities** (1 critical, 20 high, 9 moderate, 16 low) — down from 48 (3 critical) as a side effect of the `@bull-board` version bump, not a dedicated audit-fix pass.
+- Testing the fixes surfaced a separate, previously-invisible issue: Node-version/native-module incompatibilities unrelated to the missing service layer (no `engines` field, local Node v26 vs. this 2024 course repo's likely 18/20 target) — see `TECHNICAL_DEBT.md` #13. Confirmed out of scope for this pass.
+- **16 open bot PRs** (14 Renovate, 1 Dependabot `npm_and_yarn`, 1 more), several well over a year stale — oldest dated 2024-11-20. Triage is next (now that lint/build give real signal again); most are independent version bumps unrelated to the missing service layer, so should be triageable even though the build won't be fully green.
+- **1 open human-authored issue** (#3, "Optimize tsconfig.json", opened 2024-09-27 by the repo owner) — a legitimate standing TODO, not yet actioned, not part of this hygiene pass.
