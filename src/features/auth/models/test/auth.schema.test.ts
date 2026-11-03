@@ -1,4 +1,5 @@
 import { AuthModel } from '@auth/models/auth.schema';
+import { IAuthDocument } from '@auth/interfaces/auth.interface';
 import bcrypt, { hash } from 'bcryptjs';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
@@ -24,7 +25,7 @@ jest.mock('bcryptjs', () => ({
 }));
 
 describe('Auth Model', () => {
-  let authDoc: any;
+  let authDoc: IAuthDocument;
 
   beforeEach(() => {
     authDoc = new AuthModel({
@@ -66,7 +67,7 @@ describe('Auth Model', () => {
 
   it('should compare the password correctly', (done) => {
     authDoc.save().then(() => {
-      authDoc.comparePassword('hashedPassword').then((isValidPassword: any) => {
+      authDoc.comparePassword('hashedPassword').then((isValidPassword: boolean) => {
         expect(isValidPassword).toBe(false); // Mocked bcrypt result
         done(); // Signal that the test is complete
       });

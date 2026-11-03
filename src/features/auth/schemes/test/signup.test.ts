@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import { signupSchema } from '@auth/schemes/signup';
 
 describe('signupSchema', () => {
