@@ -1,5 +1,7 @@
 # Node with React: Build & Deploy a Fullstack Web Application
 
+![Views](https://hits.sh/github.com/RasimAghayev/be-chatty.svg?label=views&color=0e75b6)
+
 ## Build & deploy a social network app using React, Typescript, MongoDB, Redis, Queues, AWS, Terraform, CircleCI & more.
 
 React is one of the most popular library's for building client apps with HTML, CSS and JavaScript. If you want to establish yourself as a front-end or full-stack developer, you need to learn React.
