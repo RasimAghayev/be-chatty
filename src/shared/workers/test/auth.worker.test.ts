@@ -1,5 +1,5 @@
 import { Job, DoneCallback } from 'bull';
-import { authWorker } from '@worker/authWorker';
+import { authWorker } from '@worker/auth.worker';
 import { authService } from '@service/db/auth.service';
 import Logger from 'bunyan';
 
