@@ -27,15 +27,15 @@ This is the Phase 2.6 plan: how Phases 3-5 (`PROMPT.md`) apply here, with risks.
 3. **Docker:** no app Dockerfile exists; not adding one in this pass since the app doesn't build yet — would be a Phase 4 item to revisit once/if the core gap is addressed in a future, separate decision.
 4. **Dual-mode independence:** `.env.example` (renamed from `.env_prod`) already covers most of what's needed; will verify it's complete once the hygiene fixes land. `/health` endpoints: not currently present — will check `setupServer.ts` while in there for the `@types/express` fix and flag as a separate small addition if trivial, not forced.
 5. **Observability:** `bunyan` logging already exists; the commented-out file-rotation block in `config.ts` is dead code — will clean it up (remove, not enable, since no decision was made to add file-based log persistence).
-6. **Quality tooling:** covered by the ESLint v9 migration above; no other tooling gaps identified for this scoped pass.
-7. **CI/CD:** add a GitHub Actions workflow for install + lint + test — but **not gated on a fully green `npm run build`**, since that's expected to still fail for the documented, accepted reason. Will structure it so lint and the non-auth-dependent tests give real, meaningful signal without the workflow being permanently red for a known cause. Exact shape (e.g. a separate "known failing" build step, or omitting the full build gate for now) decided during implementation; will surface the chosen approach when done rather than deciding it unilaterally now.
+6. **Quality tooling:** ESLint v9 migration done. **Done (2026-11-03):** `prettier:check` had never actually been run/verified — 57 files failed it; fixed via `prettier:fix` (2 genuine reflow changes, 55 pure Windows-checkout CRLF noise with zero real diff, confirmed by re-adding and checking against `HEAD`). See `docs/TECHNICAL_DEBT.md` #14.
+7. **CI/CD — done (2026-11-03):** added `.github/workflows/ci.yml`. Shape chosen: install + lint + prettier is a **blocking** gate (all verified clean); `npm test` and `npm run build` also run, for real signal, but with `continue-on-error` plus a warning annotation — neither is silently green nor makes the workflow permanently red for the documented #1/#13 gaps. Also fixed `codeql.yml`, whose push/PR triggers still pointed at the pre-rename `develop` branch (TECHNICAL_DEBT.md #15).
 
 ## Phase 5 — Tests
 
-1. **Current state:** 14/18 suites fail, 9/38 tests fail — same root cause as the build.
-2. **Expected after hygiene fixes:** tests unrelated to the missing `@service/db/*` modules (schema validation, global helpers, queue/worker tests that don't hit the gap) should pass cleanly. Tests for the auth controllers that call the missing service will continue to fail — expected and documented, not silently papered over with skips or mocks replacing real logic.
-3. **Not planned:** writing new tests for the missing service layer, since that layer itself is out of scope per this plan's scope decision.
-4. `docs/TEST_REPORT.md` will record the real before/after numbers once the hygiene fixes land — not an assumed "tests now pass."
+1. **Original state:** 14/18 suites fail, 9/38 tests fail — same root cause as the build.
+2. **Verified final state (2026-11-03, independently re-run, not estimated):** 13/18 suites fail, 9/40 tests fail. The large majority (11 of 13 failing suites) trace to the one documented, in-scope gap (missing `@service/db/*`); the rest are pre-existing test-design bugs or Node-v26 runtime incompatibilities, surfaced rather than caused by this pass's lint/build fixes. Full breakdown in `docs/TEST_REPORT.md` / `docs/TESTING_STRATEGY.md`.
+3. **Not done, by design:** no new tests written for the missing service layer, since that layer itself is out of scope per this plan's scope decision.
+4. `docs/TEST_REPORT.md` and `docs/TESTING_STRATEGY.md` record the real, re-verified numbers — not an assumed "tests now pass," and not a copy of the earlier TECHNICAL_DEBT.md #13 estimate, which is now superseded.
 
 ## Net new risks introduced by this plan
 
