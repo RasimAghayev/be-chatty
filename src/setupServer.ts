@@ -14,6 +14,7 @@ import 'express-async-errors';
 import { config } from '@root/config';
 import applicationRoutes from '@root/routes';
 import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
+import { apiLimiter } from '@global/helpers/rate-limiter';
 
 const log: Logger = config.createLogger('setupServer');
 export class ChattyServer {
@@ -44,7 +45,14 @@ export class ChattyServer {
     app.use(helmet());
     app.use(
       cors({
-        origin: config.NODE_ENV !== 'development' ? config.CLIENT_URL : '*',
+        // CodeQL js/cors-permissive-configuration: always resolve to the
+        // explicit, env-configured frontend origin (CLIENT_URL, already used
+        // throughout this app, e.g. for password-reset links) instead of a
+        // `*` wildcard in development. CLIENT_URL already defaults to
+        // 'http://localhost:3000' (see src/config.ts / .env.example), which
+        // is the same origin a local frontend dev server used, so this is
+        // not a behavior change for the documented local-dev setup.
+        origin: config.CLIENT_URL,
         credentials: true,
         optionsSuccessStatus: HTTP_STATUS.OK,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -56,6 +64,10 @@ export class ChattyServer {
     app.use(compression());
     app.use(json({ limit: '50mb' }));
     app.use(urlencoded({ extended: true, limit: '50mb' }));
+    // CodeQL js/missing-rate-limiting: app-wide baseline limiter ahead of
+    // routesMiddleware(); the auth feature additionally layers a stricter,
+    // endpoint-specific limiter (see authRoutes.ts).
+    app.use(apiLimiter);
   }
 
   private routesMiddleware(app: Application): void {
@@ -90,7 +102,10 @@ export class ChattyServer {
   private async createSocketIO(httpServer: http.Server): Promise<Server> {
     const io: Server = new Server(httpServer, {
       cors: {
-        origin: config.NODE_ENV !== 'development' ? config.CLIENT_URL : '*',
+        // Same fix as the Express CORS config above (CodeQL
+        // js/cors-permissive-configuration): no `*` wildcard, always the
+        // configured CLIENT_URL.
+        origin: config.CLIENT_URL,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       },
     });
