@@ -10,7 +10,7 @@ import { IAuthDocument } from '@auth/interfaces/auth.interface';
 import { IResetPasswordParams, IUserDocument } from '@user/interfaces/user.interface';
 import { userService } from '@service/db/user.service';
 // import { emailQueue } from '@service/queues/email.queue';
-import publicIP from 'ip';
+import { Helpers } from '@global/helpers/helpers';
 import dayjs from 'dayjs';
 // import { forgotPasswordTemplate } from '@service/emails/templates/forgot-password/forgot-password-template';
 // import { resetPasswordTemplate } from '@service/emails/templates/reset-password/reset-password-template';
@@ -44,7 +44,7 @@ export class SignIn {
     const templateParams: IResetPasswordParams = {
       username: existingUser.username!,
       email: existingUser.email!,
-      ipaddress: publicIP.address(),
+      ipaddress: Helpers.getLocalIPAddress(),
       date: dayjs().format('DD/MM/YYYY HH:mm:ss'),
     };
     // const resetLink = `${config.CLIENT_URL}/reset-password?token=${userJwt}`;
