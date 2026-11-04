@@ -1,4 +1,30 @@
+import os from 'os';
+
 export class Helpers {
+  /**
+   * Returns this machine's first non-loopback IPv4 address, or the IPv4
+   * loopback address if none is found.
+   *
+   * Replaces the unmaintained `ip` npm package (Dependabot alert #1, no
+   * patched version available upstream) with the Node.js stdlib equivalent
+   * of its `address()` helper — same lookup, same fallback, zero added
+   * dependency surface.
+   */
+  static getLocalIPAddress(): string {
+    const interfaces = os.networkInterfaces();
+    for (const nic of Object.values(interfaces)) {
+      if (!nic) {
+        continue;
+      }
+      for (const details of nic) {
+        if (details.family === 'IPv4' && !details.internal) {
+          return details.address;
+        }
+      }
+    }
+    return '127.0.0.1';
+  }
+
   static firstLetterUppercase(str: string): string {
     const valueString = str.toLowerCase();
     return valueString
