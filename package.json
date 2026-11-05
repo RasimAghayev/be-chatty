@@ -17,6 +17,9 @@
   "author": "Rasim Aghayev <rasimaqayev@gmail.com>",
   "license": "ISC",
   "description": "Build & deploy a social network app using React, Typescript, MongoDB, Redis, Queues, AWS, Terraform, CircleCI & more.",
+  "engines": {
+    "node": ">=26.13.0 <27"
+  },
   "dependencies": {
     "@bull-board/express": "^6.5.2",
     "@bull-board/ui": "^6.5.2",

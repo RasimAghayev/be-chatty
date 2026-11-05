@@ -49,10 +49,10 @@
 # reasons, not one hiding the other.
 # ---------------------------------------------------------------------------
 
-FROM node:22.23.4-alpine3.24@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS base
+FROM node:26.13.0-alpine3.24@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS base
 WORKDIR /app
 
-FROM node:22.23.4-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS base-test
+FROM node:26.13.0-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68 AS base-test
 WORKDIR /app
 # mongodb-memory-server's downloaded mongod binary dynamically links
 # libcurl (used internally for FTDC/telemetry HTTP calls); bookworm-slim
