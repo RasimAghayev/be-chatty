@@ -100,6 +100,13 @@ ENV MONGOMS_DOWNLOAD_DIR=/root/.cache/mongodb-binaries
 # don't re-pay the download cost. Exit code of `npm test` is the real
 # signal; a non-zero exit here is expected given the pre-existing baseline
 # (see docs/BASELINE.md) and correctly blocks `runtime` below.
+#
+# NOTE (Phase 6, docs/TECHNICAL_DEBT.md): a mongoose 8 -> 9 upgrade attempt
+# was reverted because it requires a newer bundled MongoDB driver that
+# cannot reliably complete its handshake against a mongod in this sandbox
+# -- see the technical-debt entry for the full evidence trail (every mongod
+# version tried, 7.0.14 through 9.0.4, failed non-deterministically with 3
+# different symptoms across repeated identical runs). Not re-attempted here.
 RUN --mount=type=cache,target=/root/.cache/mongodb-binaries \
     npm test
 
