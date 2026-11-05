@@ -278,3 +278,96 @@ tree) but both agree on the important fact: **0 critical in either scan.**
    it) and does not block this PR (`main` has no required status checks; `lint-and-test` is the real gate
    here and is unaffected). If Phase 9 (`hardener`) wants to revisit the broader pattern of dev-secret
    defaults embedded in `docker-compose.yml`/`.env.example`, this is the pointer to start from.
+
+---
+
+# Phase 6 (`upgrader`) — dependency/runtime/base-image/CI-action upgrade
+
+Written 2026-11-05. Everything below was verified in Docker on `phase-6/dependency-upgrade`
+(12 commits on top of the Phase 5 baseline above), following `DEPENDENCY_MAP.md`'s upgrade order:
+runtime/base image -> framework -> libraries -> dev tooling -> CI actions.
+
+## What changed
+
+| Area | From | To | Breaking? |
+|---|---|---|---|
+| Node runtime + base images | 22.23.4 | **26.13.0** (alpine3.24 + bookworm-slim, tag+digest pinned) | No — re-verified against the exact baseline signature |
+| `express` | ^4.22.3 | **^5.3.0** | Yes (`!`) — `express-async-errors` removed (native since Express 5) |
+| `@types/express` | ^4.17.21 | ^5.0.6 | paired with the above |
+| `mongoose` / `mongodb-memory-server` | ^8.5.1 / ^10.0.0 | ^8.24.8 / ^10.4.3 (in-range only) | No — **9.x attempted, reverted**, see Blockers |
+| `redis`, `bcryptjs`, `ejs`, `joi`, `dotenv` | 4/2/3/17/16.x | **6/3/7/18/18.x** | Yes (`!`) — all majors, no code changes needed beyond the version bump itself |
+| `@bull-board/express`, `@bull-board/ui` | ^6.5.2 | **^9.11.0** | Yes (`!`) — also dropped deprecated `@types/bcryptjs`, `@types/bull` stub packages (both ship their own types now) |
+| `typescript-transform-paths` | ^3.4.7 | ^4.0.0 | No |
+| `typescript` | ^5.5.4 | unchanged | **7.x attempted, reverted**, see Blockers |
+| `eslint`, `@eslint/js`, `eslint-config-prettier` | ^9.x | **^10.x** | Yes (`!`) |
+| `jest`, `@jest/types`, `@types/jest` | ^29.x | **^30.x** | No — verified identical baseline signature |
+| `helmet`, `cloudinary`, `prettier`, `ts-jest`, `tsc-alias` | various | latest in-range patch (`npm update`) | No |
+| `.github/workflows/codeql.yml` | `actions/checkout@v4`, `codeql-action/{init,analyze}@v3` | `@v7` / `@v4` | No |
+| `.github/workflows/ci.yml` | `node-version: '22'` | `'26.13.0'` | No |
+
+Full per-commit detail and verification evidence: `git log main..phase-6/dependency-upgrade` (12 commits,
+each individually Docker-verified) and `projects/info/state/handoff/6/be-chatty.md`.
+
+## Baseline signature: unchanged, re-verified after every commit
+
+Every one of the 12 commits above was individually verified in Docker against this exact signature —
+**zero drift** from the Phase 5 baseline recorded earlier in this file:
+
+```
+build stage:  13 TS2307 errors, 11 files (identical file list every time)
+test stage:   Test Suites: 11 failed, 7 passed, 18 total
+              Tests:       2 failed, 43 passed, 45 total
+              (identical named PASS/FAIL suite list every time;
+               auth.schema.test.ts passing throughout)
+lint:         clean (exit 0) after every commit
+```
+
+## Blockers hit this phase (reverted, not carried — see `docs/TECHNICAL_DEBT.md` #16-#19 for full evidence)
+
+1. **`mongoose` 8 -> 9`: reverted.** The build-stage break (`pre('save')` signature change) was fixed and
+   confirmed working. The test stage was not: `mongodb-memory-server`'s mongod handshake against mongoose
+   9's newer bundled driver failed **non-deterministically** across identical re-runs (3 different symptoms:
+   a driver-handshake error, a SIGSEGV across 4 different pinned `MONGOMS_VERSION`s, and a plain timeout on
+   a third identical re-run) — consistent with resource contention from concurrent sibling Phase-6 Docker
+   builds in the shared sandbox, not a real version incompatibility. **Flagged as a possible stack-wide
+   mongodb-memory-server + concurrent-Docker-load gotcha** in the Phase 6 handoff for cross-check against
+   other repos in this program using the same package.
+2. **`typescript` 5 -> 7: reverted, ecosystem-blocked.** `ts-jest` caps its peer range at `<7`;
+   `@typescript-eslint` caps at `<6.1.0`; TypeScript 6.x never had a stable release. No repo-local fix is
+   possible until one of those two toolchains publishes a TS7-compatible major.
+3. **`uuid` override (via `bull`) for a MODERATE buffer-bounds CVE: attempted, reverted.** Resolves cleanly
+   and passes the build stage, but breaks the test stage — Jest's CJS resolver cannot load uuid 11+'s
+   ESM-only entry point reached through `bull`'s `require('uuid')`, flipping `auth.queue.test.ts` from PASS
+   to FAIL. Confirmed as a real regression (reverted and re-diffed the exact suite list). Staying on `bull`'s
+   own pinned `uuid@8.3.2` (itself out of scope to replace — `bull` is unmaintained since 2024-12-18,
+   migrating to BullMQ is a deliberate future decision, not a version bump).
+
+## `npm audit` count: investigated, not a regression
+
+Raw count moved 23 (Phase 2) -> 38 (after the jest 30 bump) -> 33 (uuid override, briefly) -> back to 38
+(reverted). This is a fan-out artifact: **only 5 unique advisories** are involved, each counted once per
+affected package across every dependency chain that pulls it in. The only HIGH is the pre-existing,
+already-documented, unfixable `ip` SSRF finding (`GHSA-2p57-rm9w-gvfp`, no patched release exists) —
+unchanged by this phase. See `docs/TECHNICAL_DEBT.md` #18 for the full per-advisory breakdown.
+
+## Dependency-bot PR triage
+
+10 open Renovate PRs (#96-105, all lockfile-only in-range patch bumps) were triaged individually: every
+one was either an exact match or strictly superseded by a larger major bump already landed on this branch.
+**All 10 closed as superseded**, each with a comment citing the specific commit that covers it. **0 open
+PRs remain.** Added `renovate.json` (previously no committed config existed — the bot was running on pure
+defaults, which is how 10 ungrouped single-package PRs piled up): weekly schedule, grouped in-range
+patch/minor updates (separate groups for prod vs dev deps), major updates left ungrouped and gated behind
+dependency-dashboard approval, `bull` excluded from automated updates (nothing to update to within its own
+major; a BullMQ migration is a deliberate future decision).
+
+## What Phase 7+ need to know going in
+
+1. The baseline signature above is **unchanged** from Phase 5 — Phase 7 (`cleaner`) and later phases can
+   trust the Phase 5 numbers still apply verbatim; nothing in this phase's upgrades altered them.
+2. `mongoose` stayed on 8.x and `typescript` stayed on 5.x — both have a documented, re-checkable reason
+   (`docs/TECHNICAL_DEBT.md` #16/#17). Re-attempt `mongoose` 9 in isolation (no concurrent sibling builds)
+   before concluding it's a real incompatibility rather than resource contention.
+3. `express` 4 -> 5's path-to-regexp v8 route-matching changes were checked against this repo's route
+   definitions (no wildcard/regex routes, no behavior change observed) — worth a second look if Phase 8/9
+   add new route patterns.
