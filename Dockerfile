@@ -49,10 +49,10 @@
 # reasons, not one hiding the other.
 # ---------------------------------------------------------------------------
 
-FROM node:22.23.4-alpine3.24@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS base
+FROM node:26.13.0-alpine3.24@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS base
 WORKDIR /app
 
-FROM node:22.23.4-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS base-test
+FROM node:26.13.0-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68 AS base-test
 WORKDIR /app
 # mongodb-memory-server's downloaded mongod binary dynamically links
 # libcurl (used internally for FTDC/telemetry HTTP calls); bookworm-slim
@@ -100,6 +100,13 @@ ENV MONGOMS_DOWNLOAD_DIR=/root/.cache/mongodb-binaries
 # don't re-pay the download cost. Exit code of `npm test` is the real
 # signal; a non-zero exit here is expected given the pre-existing baseline
 # (see docs/BASELINE.md) and correctly blocks `runtime` below.
+#
+# NOTE (Phase 6, docs/TECHNICAL_DEBT.md): a mongoose 8 -> 9 upgrade attempt
+# was reverted because it requires a newer bundled MongoDB driver that
+# cannot reliably complete its handshake against a mongod in this sandbox
+# -- see the technical-debt entry for the full evidence trail (every mongod
+# version tried, 7.0.14 through 9.0.4, failed non-deterministically with 3
+# different symptoms across repeated identical runs). Not re-attempted here.
 RUN --mount=type=cache,target=/root/.cache/mongodb-binaries \
     npm test
 
