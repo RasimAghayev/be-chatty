@@ -1,53 +1,132 @@
-name: chatty
+name: ${COMPOSE_PROJECT_NAME:-be-chatty-p5}
+
+# Phase 5 container baseline. Host ports all come from this repo's reserved
+# block (projects/info/state/ports.md): be-chatty = 20050-20059.
+#   20050 app (HTTP)   20051 mongo   20052 mongo-ui   20053 redis   20054 redis-ui
+# mongo/redis/mongo-ui/redis-ui already existed in this file before Phase 5
+# (course-authored local dev setup) on the framework's own default ports
+# (27017/8081/6379/8082) — remapped here to the reserved block so this
+# phase's containers never collide with another repo's parallel Phase 5/6/...
+# work (CLAUDE.md R4). Internal container ports are unchanged.
+#
+# `app` cannot actually start today: `npm run build` fails on this repo with
+# a pre-existing, documented P0 bug (missing @service/db/{auth,user}.service
+# modules — see docs/TECHNICAL_DEBT.md #1 and docs/BASELINE.md), so the
+# `runtime` image cannot be built at all. `app`'s definition below is real
+# and correct for when that gap is closed (Phase 6/7/8/11's call); `make up`
+# will fail at the build step until then, which is the accurate, intended
+# behavior for a red baseline (`make up` depends on `make verify`).
+
 services:
-  mongo:
-    container_name: mongo
-    image: mongo
-    restart: always
+  app:
+    build:
+      context: .
+      target: runtime
+    container_name: be-chatty-app
+    restart: unless-stopped
     ports:
-      - 27017:27017
+      - '${APP_HOST_PORT:-20050}:5000'
+    environment:
+      SERVER_PORT: 5000
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: mongodb://${MONGO_ROOT_USERNAME:-root}:${MONGO_ROOT_PASSWORD:-root}@mongo:27017/chattyapp?authSource=admin
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      REDIS_URL: redis://default:${REDIS_PASSWORD:-eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81}@redis:6379
+      JWT_TOKEN: ${JWT_TOKEN:-ThisIsATokenFromMe}
+      SECRET_KEY_ONE: ${SECRET_KEY_ONE:-ThisIsaSecretCookieKeyOne}
+      SECRET_KEY_TWO: ${SECRET_KEY_TWO:-ThisIsaSecretCookieKeyTwo}
+      CLOUD_NAME: ${CLOUD_NAME:-}
+      CLOUD_API_KEY: ${CLOUD_API_KEY:-}
+      CLOUD_API_SECRET: ${CLOUD_API_SECRET:-}
+      SENDER_HOST: ${SENDER_HOST:-}
+      SENDER_PORT: ${SENDER_PORT:-587}
+      SENDER_EMAIL: ${SENDER_EMAIL:-}
+      SENDER_EMAIL_PASSWORD: ${SENDER_EMAIL_PASSWORD:-}
+      SENDERGRID_API_KEY: ${SENDERGRID_API_KEY:-}
+      SENDERGRID_SENDER: ${SENDERGRID_SENDER:-}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get({host:'127.0.0.1',port:5000,path:'/api/v1'},r=>{process.exit(r.statusCode<500?0:1)}).on('error',()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 5
+
+  mongo:
+    container_name: be-chatty-mongo
+    image: mongo
+    restart: unless-stopped
+    ports:
+      - '${MONGO_HOST_PORT:-20051}:27017'
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-root}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-root}
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping")']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     volumes:
       - ./db/mongodb:/data/db
 
   mongo-ui:
-    container_name: mongo-ui
+    container_name: be-chatty-mongo-ui
     image: mongo-express
-    restart: always
+    restart: unless-stopped
     ports:
-      - 8081:8081
+      - '${MONGO_UI_HOST_PORT:-20052}:8081'
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USERNAME:-root}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-root}
       ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME:-root}:${MONGO_ROOT_PASSWORD:-root}@mongo:27017/
       ME_CONFIG_BASICAUTH: false
+    depends_on:
+      mongo:
+        condition: service_healthy
 
   redis:
-    container_name: redis
+    container_name: be-chatty-redis
     image: redis:latest
-    restart: always
+    restart: unless-stopped
     healthcheck:
-      test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
+      # Original (pre-Phase-5) healthcheck ran unauthenticated `redis-cli
+      # ping`, which always reports NOAUTH/unhealthy once --requirepass is
+      # set below — verified broken by running it. Fixed to authenticate.
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG']
       interval: 1s
       timeout: 3s
       retries: 5
     ports:
-      - '6379:6379'
+      - '${REDIS_HOST_PORT:-20053}:6379'
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD:-eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81}
     volumes:
       - ./db/redis:/data
 
   redis-ui:
-    container_name: redis-ui
+    container_name: be-chatty-redis-ui
     hostname: redis-ui
     image: rediscommander/redis-commander:latest
-    restart: always
+    restart: unless-stopped
     environment:
       - REDIS_PORT=6379
       - REDIS_HOST=redis
       - REDIS_USER=default
       - REDIS_PASSWORD=${REDIS_PASSWORD:-eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81}
     ports:
-      - '8082:8081'
+      - '${REDIS_UI_HOST_PORT:-20054}:8081'
+    depends_on:
+      redis:
+        condition: service_healthy
