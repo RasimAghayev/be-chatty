@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { forgotPasswordTemplate } from '@service/emails/templates/forgot-password/forgot-password-template';
 import { emailQueue } from '@service/queues/email.queue';
 import { IResetPasswordParams } from '@user/interfaces/user.interface';
-import publicIP from 'ip';
+import { Helpers } from '@global/helpers/helpers';
 import dayjs from 'dayjs';
 import { resetPasswordTemplate } from '@service/emails/templates/reset-password/reset-password-template';
 
@@ -54,7 +54,7 @@ export class Password {
     const templateParams: IResetPasswordParams = {
       username: existingUser.username!,
       email: existingUser.email!,
-      ipaddress: publicIP.address(),
+      ipaddress: Helpers.getLocalIPAddress(),
       date: dayjs().format('DD/MM/YYYY HH:mm:ss'),
     };
     const template: string = resetPasswordTemplate.passwordResetConfirmationTemplate(templateParams);
