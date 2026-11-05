@@ -77,12 +77,5 @@
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0"
-  },
-  "overrides": {
-    "minimatch": "^11.0.4",
-    "test-exclude": {
-      "minimatch": "3.1.4"
-    },
-    "uuid": "^12.0.1"
   }
 }
