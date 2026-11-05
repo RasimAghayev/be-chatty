@@ -267,3 +267,14 @@ tree) but both agree on the important fact: **0 critical in either scan.**
 5. No `/health` endpoint exists in the app yet — the `HEALTHCHECK`/compose healthcheck above uses the
    existing catch-all 404 route as a liveness proxy. A real `/health/live` + `/health/ready` pair is Phase
    9's job (dual-mode independence).
+6. **GitGuardian flagged `docker-compose.yml`'s new `app.environment.DATABASE_URL` line** (PR #106) as a
+   "Generic Password" — this is the same `root`/`root` MongoDB dev-only default that already exists,
+   unflagged, in `.env.example` on `main` (`DATABASE_URL=mongodb://root:root@localhost:27017/`, predates
+   this phase) and was already reviewed and accepted in `docs/TECHNICAL_DEBT.md` #7/#8 ("local-dev-only
+   risk, but still bad practice"). It is not a new or different secret, and not tied to any real/external
+   system — only to a throwaway local `mongo` container this compose file itself starts with that same
+   default. Per `CLAUDE.md`'s security policy this is reported here rather than silently dismissed; it is
+   **not treated as a newly-compromised secret** (nothing to rotate — there is no real credential behind
+   it) and does not block this PR (`main` has no required status checks; `lint-and-test` is the real gate
+   here and is unaffected). If Phase 9 (`hardener`) wants to revisit the broader pattern of dev-secret
+   defaults embedded in `docker-compose.yml`/`.env.example`, this is the pointer to start from.
