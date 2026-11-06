@@ -50,3 +50,50 @@ Full verification evidence: `projects/info/state/handoff/6/be-chatty.md`. Baseli
 ### Dependency-bot PRs
 
 Closed 10 open Renovate PRs (#96-105) as superseded by the larger major bumps above; 0 open PRs remain.
+
+## Phase 7 — dead code & restructure (2026-11-06)
+
+Full verification evidence: `projects/info/state/handoff/7/be-chatty.md`. Baseline before/after:
+`docs/BASELINE.md` (Phase 7 section).
+
+### Removed
+
+- `src/shared/workers/test/email.worker.test.ts`, `.../user.worker.test.ts` — byte-identical
+  duplicates of the real production worker files, mistakenly also committed under `test/`;
+  contained zero Jest assertions, so they were two of the baseline's documented failing suites,
+  not real tests.
+- Dead commented-out email-confirmation block in `signin.ts` (duplicated, in an earlier draft
+  form, the real working implementation already in `password.ts`), plus leftover commented
+  debug-logging cruft in `signup.ts`, `mail.transport.ts`, `password.test.ts`, and a dead
+  duplicate `parseJSON` method comment in `helpers.ts`.
+- `typescript-transform-paths` dependency and its two tsconfig.json `plugins` entries — confirmed
+  inert in both the build pipeline (plain `tsc`, no ts-patch; path aliasing is already handled by
+  `tsc-alias`) and the test pipeline (`ts-jest` resolves aliases via `moduleNameMapper`, not this
+  plugin).
+- `@bull-board/ui` direct dependency — already pulled in transitively by `@bull-board/express` at
+  the identical pinned version; no source file imports it directly.
+- Dead `**/*.spec.ts` exclude pattern in `tsconfig.json` (project uses `*.test.ts`; zero
+  `.spec.ts` files have ever existed in this repo).
+- `commands.txt` — a stray, stale shell-history scratch file at the repo root, superseded by
+  `package.json`/git history; its now-unnecessary `.dockerignore` entry removed alongside it.
+
+### Kept despite being flagged by tooling (see Phase 7 handoff for full reasoning)
+
+- `src/features/user/models/user.schema.ts`, 7 unused interfaces in `user.interface.ts`, and 4
+  unused `user.mock.ts` fixtures — scaffolding for the already-documented, deliberately deferred
+  `@service/db/user.service` gap (`docs/TECHNICAL_DEBT.md` #1), not abandoned code.
+- 5 unused error classes in `error-handler.ts` (`NotFoundError`, `FileToLargeError`,
+  `FileUploadError`, `InternalServerError`, `DatabaseConnectionError`) — genuinely unreferenced,
+  kept out of caution rather than deleted on tooling signal alone.
+- `ts-node` devDependency — flagged unused by static tooling, but `commands.txt`'s own history
+  (before its removal) confirmed it backs `nodemon`'s dynamic `.ts`-file execution in the
+  (separately, already broken) `dev`/`dev:mac` scripts, a pathway static tools cannot see.
+- 3 commented-out test cases in `setupDatabase.test.ts` covering real, currently-untested,
+  already-implemented behavior — flagged for Phase 11, not deleted.
+
+### Baseline impact
+
+Build: 13 TS2307 errors / 11 files -> 12 errors / 10 files. Test: 11 failed/7 passed/18 total
+suites -> 9 failed/7 passed/16 total suites; test counts unchanged (2 failed/43 passed/45 total).
+Lint: exit 0, unchanged. `make verify` still exits non-zero, for the same already-documented P0
+reason (`docs/TECHNICAL_DEBT.md` #1) — unchanged, not a new regression.
