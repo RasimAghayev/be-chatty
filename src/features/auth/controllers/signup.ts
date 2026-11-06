@@ -13,7 +13,6 @@ import { IUserDocument } from '@user/interfaces/user.interface';
 import { UserCache } from '@service/redis/user.cache';
 import { config } from '@root/config';
 import { omit } from 'lodash';
-import JWT from 'jsonwebtoken';
 import { authQueue } from '@service/queues/auth.queue';
 import { userQueue } from '@service/queues/user.queue';
 
@@ -60,7 +59,7 @@ export class SignUp {
 
     userQueue.addUserJob('addUserToDB', { value: userDataForCache });
 
-    const userJwt: string = SignUp.prototype.signupToken(authData, userObjectId);
+    const userJwt: string = Helpers.signAuthToken(userObjectId, authData);
 
     req.session = { jwt: userJwt };
 
@@ -69,18 +68,6 @@ export class SignUp {
       user: userDataForCache,
       token: userJwt,
     });
-  }
-  private signupToken(data: IAuthDocument, userObjectId: ObjectId): string {
-    return JWT.sign(
-      {
-        userId: userObjectId,
-        uId: data.uId,
-        email: data.email,
-        username: data.username,
-        avatarColor: data.avatarColor,
-      },
-      config.JWT_TOKEN!
-    );
   }
 
   private signUpData(data: ISignUpData): IAuthDocument {

@@ -1,4 +1,6 @@
 import os from 'os';
+import JWT from 'jsonwebtoken';
+import { config } from '@root/config';
 
 export class Helpers {
   /**
@@ -35,6 +37,31 @@ export class Helpers {
 
   static lowerCase(str: string): string {
     return str.toLowerCase();
+  }
+
+  /**
+   * Signs the session JWT carrying the standard auth-identity claims
+   * (userId/uId/email/username/avatarColor). Both signup and signin built
+   * an identical payload shape independently before this was extracted —
+   * this is now the single place that does it (DRY, Phase 8 architecture
+   * pass; see docs/adr/0001-dry-auth-token-signing.md).
+   *
+   * `userId` is typed `unknown` deliberately: callers pass either a
+   * mongoose/mongodb `ObjectId` (signup, which mints its own) or whatever
+   * `_id` resolves to on a looked-up `IUserDocument` (signin) — the value
+   * is only ever embedded in the signed payload, never operated on here.
+   */
+  static signAuthToken(userId: unknown, data: { uId: string; email: string; username: string; avatarColor: string }): string {
+    return JWT.sign(
+      {
+        userId,
+        uId: data.uId,
+        email: data.email,
+        username: data.username,
+        avatarColor: data.avatarColor,
+      },
+      config.JWT_TOKEN!
+    );
   }
 
   static generateRandomIntegers(integerLength: number): number {
