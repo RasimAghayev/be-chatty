@@ -97,3 +97,42 @@ Build: 13 TS2307 errors / 11 files -> 12 errors / 10 files. Test: 11 failed/7 pa
 suites -> 9 failed/7 passed/16 total suites; test counts unchanged (2 failed/43 passed/45 total).
 Lint: exit 0, unchanged. `make verify` still exits non-zero, for the same already-documented P0
 reason (`docs/TECHNICAL_DEBT.md` #1) — unchanged, not a new regression.
+
+## Phase 8 — architecture pass (2026-11-06)
+
+Full verification evidence: `projects/info/state/handoff/8/be-chatty.md`. Baseline before/after:
+`docs/BASELINE.md` (Phase 8 section). ADRs: `docs/adr/0001`-`0003`.
+
+### Changed (refactors, no behavior change)
+
+- **DRY**: `signin.ts`/`signup.ts`'s duplicated JWT session-token signing (`{userId, uId, email,
+  username, avatarColor}`) extracted into `Helpers.signAuthToken` (`docs/adr/0001`).
+- **DRY + GoF (Template Method)**: `auth.worker.ts`/`email.worker.ts`/`user.worker.ts`'s
+  duplicated try/progress/done + catch/log/done job-processing shape extracted into a new
+  `BaseWorker` abstract class (`src/shared/workers/base.worker.ts`), mirroring the existing
+  `BaseQueue`/`BaseCache` convention (`docs/adr/0002`). Worker methods became bound arrow class
+  properties to preserve correct `this` binding under Bull's unbound-callback registration.
+
+### Added
+
+- `docs/adr/` (new directory) — 3 ADRs: 0001 (DRY, auth-token signing), 0002 (DRY + GoF,
+  `BaseWorker`), 0003 (Clean/Hexagonal — the `@service/db/*` import boundary is already the right
+  shape; documented as a deliberate "leave it alone" decision, not changed).
+- `docs/ARCHITECTURE.md` Phase 8 section — full apply/don't-apply table (DRY, KISS/YAGNI, SOLID,
+  Clean/Hexagonal, DDD, EDA, Modular monolith, GoF) with a one-line reason per principle.
+
+### Not changed, considered and declined (see `docs/ARCHITECTURE.md`/`docs/BASELINE.md` for why)
+
+- SOLID, DDD, EDA, Modular monolith: none found to apply against the real code — single CRUD
+  domain, fire-and-forget (not event-driven) queue usage, single wired feature.
+- `config.ts`'s repeated per-env-var default/constructor-copy pattern: real but low-value
+  duplication in code that works today and isn't blocking any test — KISS/YAGNI declined it.
+- The `@service/db/{auth,user}.service` implementation gap (`docs/TECHNICAL_DEBT.md` #1): still
+  deliberately deferred business logic, not architecture work — see `docs/adr/0003`.
+
+### Baseline impact
+
+None. Build: unchanged (12 TS2307 errors / 10 files, same file list, same root cause). Test:
+unchanged (9 failed/7 passed/16 total suites; 2 failed/43 passed/45 total tests, same named
+suite list). Lint: exit 0, unchanged. `make verify` still exits non-zero for the same
+already-documented P0 reason — not a new regression.
