@@ -66,13 +66,4 @@ export class Helpers {
       return jsonString;
     }
   }
-
-  // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // static parseJSON(prop: string): any {
-  //   try {
-  //     return JSON.parse(prop);
-  //   } catch (error) {
-  //     return prop;
-  //   }
-  // }
 }
