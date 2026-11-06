@@ -27,10 +27,6 @@ describe('Validation Schemas', () => {
         confirmPassword: 'Password1',
       });
 
-      // if (error) {
-      //   console.error('Validation error:', error.details[0].message);
-      // }
-
       expect(error?.details[0].message).toBe('Invalid password');
     });
 

@@ -7,19 +7,13 @@ import { authService } from '@service/db/auth.service';
 import { BadRequestError } from '@global/helpers/error-handler';
 import { loginSchema } from '@auth/schemes/signin';
 import { IAuthDocument } from '@auth/interfaces/auth.interface';
-import { IResetPasswordParams, IUserDocument } from '@user/interfaces/user.interface';
+import { IUserDocument } from '@user/interfaces/user.interface';
 import { userService } from '@service/db/user.service';
-// import { emailQueue } from '@service/queues/email.queue';
-import { Helpers } from '@global/helpers/helpers';
-import dayjs from 'dayjs';
-// import { forgotPasswordTemplate } from '@service/emails/templates/forgot-password/forgot-password-template';
-// import { resetPasswordTemplate } from '@service/emails/templates/reset-password/reset-password-template';
 
 export class SignIn {
   @joiValidation(loginSchema)
   public async read(req: Request, res: Response): Promise<void> {
     const { username, password } = req.body;
-    // const existingUser: IAuthDocument = await authService.getUserByUsernameOrEmail(username);
     const existingUser: IAuthDocument = await authService.getAuthUserByUsername(username);
     if (!existingUser) {
       throw new BadRequestError('Invalid credentials');
@@ -40,26 +34,6 @@ export class SignIn {
       },
       config.JWT_TOKEN!
     );
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- only consumed by the commented-out email-confirmation block below
-    const templateParams: IResetPasswordParams = {
-      username: existingUser.username!,
-      email: existingUser.email!,
-      ipaddress: Helpers.getLocalIPAddress(),
-      date: dayjs().format('DD/MM/YYYY HH:mm:ss'),
-    };
-    // const resetLink = `${config.CLIENT_URL}/reset-password?token=${userJwt}`;
-    // const template1: string = forgotPasswordTemplate.forgotPasswordConfirmationTemplate(existingUser.username!, resetLink);
-    // const template2: string = resetPasswordTemplate.passwordResetConfirmationTemplate(templateParams);
-    // emailQueue.addEmailJob('forgotPasswordEmail', {
-    //   template: template1,
-    //   receiverEmail: 'daphney19@ethereal.email',
-    //   subject: 'forgotPasswordEmailTemplate',
-    // });
-    // emailQueue.addEmailJob('forgotPasswordEmail', {
-    //   template: template2,
-    //   receiverEmail: 'daphney19@ethereal.email',
-    //   subject: 'passwordResetConfirmationTemplate',
-    // });
 
     req.session = { jwt: userJwt };
     const userDocument: IUserDocument = {

@@ -1,5 +1,5 @@
 {
-  "exclude": ["node_modules", "**/*.spec.ts","build","dist"], 
+  "exclude": ["node_modules", "build", "dist"],
   "include": ["src/**/*"], 
   "compileOnSave": false ,
   "compilerOptions": {
@@ -108,7 +108,6 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "pretty": true /* Print informative messages to the terminal. */,
-    "plugins": [{ "transform": "typescript-transform-paths" }, { "transform": "typescript-transform-paths", "afterDeclarations": true }],
     "paths": {
       "@auth/*": ["src/features/auth/*"],
       "@user/*": ["src/features/user/*"],

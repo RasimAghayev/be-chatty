@@ -371,3 +371,96 @@ major; a BullMQ migration is a deliberate future decision).
 3. `express` 4 -> 5's path-to-regexp v8 route-matching changes were checked against this repo's route
    definitions (no wildcard/regex routes, no behavior change observed) — worth a second look if Phase 8/9
    add new route patterns.
+
+# Phase 7 (`cleaner`) — dead code & restructure
+
+Full verification evidence: `projects/info/state/handoff/7/be-chatty.md`.
+
+## Baseline signature: improved, not just preserved
+
+Unlike Phase 6, this phase's own stated job (removing dead code) changed two of the three
+baseline numbers above — on purpose, and verified before/after each commit:
+
+```
+build: 13 TS2307 errors, 11 files  ->  12 TS2307 errors, 10 files
+test:  Test Suites: 11 failed, 7 passed, 18 total  ->  9 failed, 7 passed, 16 total
+       Tests:       2 failed, 43 passed, 45 total  ->  unchanged (2 failed, 43 passed, 45 total)
+lint:  exit 0  ->  unchanged (exit 0)
+```
+
+Root cause of the shift: `src/shared/workers/test/email.worker.test.ts` and
+`.../user.worker.test.ts` were byte-for-byte duplicates of the real production files
+(`email.worker.ts`/`user.worker.ts`) mistakenly also committed under `test/` with a `.test.ts`
+extension. Neither contained a single Jest assertion, so removing them is a pure reduction in
+dead/duplicate surface, not a behavior change — no real test coverage existed in either file
+(confirmed via `ts-prune`, which flagged their exported consts as having zero importers, and a
+direct byte diff against the real worker files). `user.worker.test.ts` also carried one of the
+13 original TS2307 errors (same missing-`@service/db/user.service` root cause as its production
+twin), which is why the build-stage count dropped by exactly one.
+
+No other commit in this phase changed the build/test/lint signature at all — each of the other 5
+commits (removing `typescript-transform-paths`, `@bull-board/ui`, a dead `**/*.spec.ts` tsconfig
+exclude pattern, several pockets of commented-out dead/duplicate code, and a stray `commands.txt`
+scratch file) was independently re-verified via `docker build --target build`/`--target test` +
+`make lint` to produce byte-identical error counts, byte-identical named PASS/FAIL suite lists,
+and identical test counts to the commit before it.
+
+## `make verify` — still red, for the same documented reason
+
+```
+$ make verify
+docker build --target test   # exit 1 (9/16 suites fail, 2/45 tests fail — table above)
+make: *** [Makefile:34: verify] Error 1
+```
+Exit code 2 (same GNU Make wrapper behavior as the Phase 5/6 baseline). The remaining redness is
+the same, already-documented, deliberately out-of-scope `@service/db/{auth,user}.service` P0 gap
+(`docs/TECHNICAL_DEBT.md` #1) plus the same two pre-existing test-design bugs (`docs/TECHNICAL_DEBT.md`
+#13) — nothing new, nothing hidden. This phase did not and was not supposed to close that gap
+(it is new business logic, not dead code).
+
+## What Phase 8+ need to know going in
+
+1. The baseline signature to compare against going forward is the one in this section (12
+   errors/10 files; 9/7/16 suites; 2/43/45 tests; lint exit 0), not the original Phase 5/6 numbers
+   further up this document — those are now superseded for the reason explained above.
+2. `src/features/user/models/user.schema.ts`, the 7 unused interfaces in
+   `src/features/user/interfaces/user.interface.ts`, and 4 of `src/mocks/user.mock.ts`'s exports
+   were flagged as unused by both `knip` and `ts-prune` but deliberately **kept, not deleted** —
+   they are the Mongoose model / DTOs / test fixtures for the same, already-documented, deferred
+   `@service/db/user.service` gap (same root cause as #1 above), not abandoned code. Whoever
+   eventually implements that service layer will consume these; deleting them now would mean
+   rebuilding identical boilerplate later. See the Phase 7 handoff for the full tool-output
+   evidence trail.
+3. 5 unused exported error classes in `src/shared/globals/helpers/error-handler.ts`
+   (`NotFoundError`, `FileToLargeError`, `FileUploadError`, `InternalServerError`,
+   `DatabaseConnectionError`) were investigated and found to have zero references anywhere in
+   source or tests — genuinely dead, not tied to the deferred service-layer gap like item 2 above
+   — but were **left in place this phase** out of caution (see the Phase 7 handoff's reasoning);
+   a future pass may remove them if that reasoning is re-examined and still holds.
+4. `ts-node` (devDependency) is flagged unused by both `knip` and `depcheck`, but was **kept**: the
+   repo's own `commands.txt` history (now removed, see this phase's commits) confirms it was
+   installed specifically to let `nodemon` execute `.ts` files directly in the `dev`/`dev:mac`
+   scripts, a dynamic-dispatch pathway no static import-graph tool can see. Those scripts are
+   separately, already broken today (`nodemon` itself is an unlisted dependency — flagged as an
+   out-of-scope finding in the Phase 7 handoff, not fixed here), so this could not be fully
+   re-verified end-to-end this phase.
+5. Three commented-out `it(...)` test cases in `src/test/setupDatabase.test.ts` (DB-connection
+   failure, reconnect-on-disconnect, graceful SIGINT/SIGTERM shutdown) were deliberately **not**
+   deleted, despite being "commented-out code" — they describe real, currently-implemented,
+   currently-uncovered behavior with no equivalent test elsewhere, unlike this phase's other
+   commented-code removals (which were all either debug-log leftovers or logic superseded by a
+   working implementation elsewhere). Flagged for Phase 11 to fix and re-enable (or deliberately
+   replace), not silently discarded.
+6. A `make format`/`npm run prettier:check` run on this (Windows) worktree currently fails on
+   effectively every `.ts` file in `src/` — including files untouched by any commit in this phase.
+   Confirmed pre-existing and environment-only: `core.autocrlf=true` on this host rewrites the
+   committed LF line endings to CRLF on checkout, and the `make format`/`make lint` targets
+   bind-mount (`-v`) the live host working tree into the container rather than copying git's
+   committed blob content, so Prettier's default `endOfLine: "lf"` flags the CRLF. No
+   `.gitattributes` exists to pin line endings. This is not reachable from real GitHub Actions CI
+   (`ci.yml`'s `Prettier check` step does a plain Linux checkout, no bind mount, no autocrlf) and
+   is the same phenomenon `docs/TECHNICAL_DEBT.md` #14 already documented and fixed at the git-blob
+   level — it just recurs on every fresh Windows checkout without a committed `.gitattributes`.
+   Not fixed here (would touch every file in the repo for a non-functional, environment-only
+   issue, and adding `.gitattributes` is git-hygiene/Phase 4 scope) — flagged as an out-of-scope
+   finding.

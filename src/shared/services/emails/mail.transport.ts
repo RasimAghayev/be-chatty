@@ -23,12 +23,6 @@ class MailTransport {
       return;
     }
     await this.developmentEmailSender(receiverEmail, subject, body);
-
-    // if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') {
-    //   await this.developmentEmailSender(receiverEmail, subject, body);
-    // } else if (config.NODE_ENV === 'production') {
-    //   await this.productionEmailSender(receiverEmail, subject, body);
-    // }
   }
   private async developmentEmailSender(receiverEmail: string, subject: string, body: string): Promise<void> {
     const transporter: Mail = nodemailer.createTransport({
