@@ -1,22 +1,23 @@
 import { DoneCallback, Job } from 'bull';
-import Logger from 'bunyan';
-import { config } from '@root/config';
 import { authService } from '@service/db/auth.service';
+import { BaseWorker } from './base.worker';
 
-const log: Logger = config.createLogger('authWorker');
-
-class AuthWorker {
-  async addAuthUserToDB(job: Job, done: DoneCallback): Promise<void> {
-    try {
-      const { value } = job.data;
-      await authService.createAuthUser(value);
-      job.progress(100);
-      done(null, job.data);
-    } catch (error) {
-      log.error(error);
-      done(error as Error);
-    }
+class AuthWorker extends BaseWorker {
+  constructor() {
+    super('authWorker');
   }
+
+  // Arrow class property (not a regular method): auth.queue.ts registers
+  // this as a bare `authWorker.addAuthUserToDB` callback reference with no
+  // `.bind()`, same as the controllers' `ClassName.prototype.method`
+  // registration pattern in authRoutes.ts — `this` must already be bound
+  // at construction time, which an arrow property does and a regular
+  // method would not.
+  addAuthUserToDB = async (job: Job, done: DoneCallback): Promise<void> => {
+    await this.run(job, done, async ({ value }) => {
+      await authService.createAuthUser(value);
+    });
+  };
 }
 
 export const authWorker: AuthWorker = new AuthWorker();

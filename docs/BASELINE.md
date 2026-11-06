@@ -464,3 +464,68 @@ the same, already-documented, deliberately out-of-scope `@service/db/{auth,user}
    Not fixed here (would touch every file in the repo for a non-functional, environment-only
    issue, and adding `.gitattributes` is git-hygiene/Phase 4 scope) — flagged as an out-of-scope
    finding.
+
+# Phase 8 (`architect`) — architecture pass
+
+Pilot run for Phase 8 on the Node.js/Express/TypeScript stack (R10) — `.claude/skills/` had no
+Phase 8 skill of any stack before this run. Full evidence: `projects/info/state/handoff/8/be-chatty.md`.
+Full principle-by-principle apply/don't-apply table with reasons: `docs/ARCHITECTURE.md`'s own
+Phase 8 section. ADRs: `docs/adr/0001` (DRY, auth-token signing), `docs/adr/0002` (DRY + GoF
+Template Method, `BaseWorker`), `docs/adr/0003` (Clean/Hexagonal — the `@service/db/*` import
+boundary is already the right shape; documented, not changed).
+
+## Baseline signature: unchanged, re-verified after every commit
+
+Every one of this phase's 3 commits (2 code refactors + 1 docs/ADR commit) was individually
+verified in Docker against the exact Phase 7 baseline signature above — **zero drift**:
+
+```
+build stage:  12 TS2307 errors, 10 files (identical file list every time, only line numbers
+              inside two files shift by one, from removed import lines — same files, same error
+              code, same root cause)
+test stage:   Test Suites: 9 failed, 7 passed, 16 total
+              Tests:       2 failed, 43 passed, 45 total
+              (identical named PASS/FAIL suite list every round)
+lint:         clean (exit 0) after every commit
+make verify:  exit 2 (GNU Make's wrapper for the first failing recipe line), same as Phase 5/6/7 —
+              same already-documented P0 reason (`docs/TECHNICAL_DEBT.md` #1), not a new regression
+```
+
+## What changed (code) and why — summary; full reasoning in the ADRs
+
+| Commit | What | Why (DRY/GoF, not cosmetic) |
+|---|---|---|
+| `refactor: extract duplicated JWT auth-token signing into Helpers.signAuthToken` | `signin.ts`/`signup.ts` each independently built an identical `{userId, uId, email, username, avatarColor}` JWT payload. Extracted into `Helpers.signAuthToken`. | Real, present duplication (not coincidental) — both producing the same artifact for the same purpose. ADR 0001. |
+| `refactor: extract shared Bull job-processing boilerplate into BaseWorker` | `auth.worker.ts`/`email.worker.ts`/`user.worker.ts` each implemented an identical try/progress/done + catch/log/done shape. Extracted into a `BaseWorker` Template Method, mirroring the existing `BaseQueue`/`BaseCache` convention. Worker methods became bound arrow class properties (not regular methods) since each is registered as a bare unbound callback — verified this doesn't break anything, not assumed. | Real, present duplication; completes a pattern this codebase already established elsewhere rather than inventing a new one. ADR 0002. |
+
+Nothing else in the codebase was changed. No dead code was removed this phase (that is Phase 7's
+domain, R1 — one agent, one phase); the 5 unused `error-handler.ts` classes and the
+`user.schema.ts`/`user.interface.ts`/`user.mock.ts` scaffolding that Phase 7 deliberately kept are
+untouched here too, consistent with that boundary.
+
+## Principles considered and declined, with why (full detail in `docs/ARCHITECTURE.md`)
+
+SOLID, DDD, EDA, and Modular monolith were all evaluated against the real code and judged **not
+to apply** — this repo's single wired feature (auth), CRUD-shaped domain, fire-and-forget queue
+usage (not domain events), and single-feature scope don't present the problem any of those four
+principles exist to solve. This is treated as a legitimate outcome, not a sign the pass was
+shallow — see `docs/ARCHITECTURE.md`'s table for the specific one-line reason against each.
+
+`config.ts`'s per-env-var `DEFAULT_X` field + constructor-copy pattern (repeated ~17 times) was
+also looked at as a DRY candidate and declined: it is real repetition, but refactoring it (e.g.
+to a generic `getEnv(key, default)` loop) would touch every property in a config loader that
+works correctly today, isn't blocking any test, and isn't a source of any real reported problem —
+KISS/YAGNI won this one.
+
+## What Phase 9+ need to know going in
+
+1. The baseline signature to compare against going forward is still the one in this section
+   (same numbers as Phase 7 — unchanged); nothing in this phase altered it.
+2. The `@service/db/{auth,user}.service` P0 gap (`docs/TECHNICAL_DEBT.md` #1) is now also
+   architecturally documented, not just tracked as a defect: `docs/adr/0003` records that the
+   existing `@service/db/*` import boundary is already the correct Hexagonal shape and that an
+   eventual implementation slots in behind it with zero call-site changes. Still not implemented
+   this phase — still deferred business logic, by the same standing scope decision.
+3. `Helpers.signAuthToken` and `BaseWorker` are both new, small, reusable surfaces — if Phase 9
+   or later adds a new controller that mints a session token, or a new Bull worker, it should use
+   these rather than re-deriving the pattern.

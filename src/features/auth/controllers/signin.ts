@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { config } from '@root/config';
-import JWT from 'jsonwebtoken';
 import { joiValidation } from '@global/decorators/joi-validation.decorators';
 import HTTP_STATUS from 'http-status-codes';
 import { authService } from '@service/db/auth.service';
 import { BadRequestError } from '@global/helpers/error-handler';
+import { Helpers } from '@global/helpers/helpers';
 import { loginSchema } from '@auth/schemes/signin';
 import { IAuthDocument } from '@auth/interfaces/auth.interface';
 import { IUserDocument } from '@user/interfaces/user.interface';
@@ -24,16 +23,12 @@ export class SignIn {
     }
 
     const user: IUserDocument = await userService.getUserByAuthId(`${existingUser._id}`);
-    const userJwt: string = JWT.sign(
-      {
-        userId: user._id,
-        uId: existingUser.uId,
-        email: existingUser.email,
-        username: existingUser.username,
-        avatarColor: existingUser.avatarColor,
-      },
-      config.JWT_TOKEN!
-    );
+    const userJwt: string = Helpers.signAuthToken(user._id, {
+      uId: existingUser.uId,
+      email: existingUser.email,
+      username: existingUser.username,
+      avatarColor: existingUser.avatarColor,
+    });
 
     req.session = { jwt: userJwt };
     const userDocument: IUserDocument = {
