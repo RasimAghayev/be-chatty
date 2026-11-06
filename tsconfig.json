@@ -1,5 +1,5 @@
 {
-  "exclude": ["node_modules", "**/*.spec.ts","build","dist"], 
+  "exclude": ["node_modules", "build", "dist"],
   "include": ["src/**/*"], 
   "compileOnSave": false ,
   "compilerOptions": {
