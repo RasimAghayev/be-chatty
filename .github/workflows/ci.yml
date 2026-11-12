@@ -5,42 +5,206 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '26.13.0'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  lint-and-test:
+  # ---------------------------------------------------------------------------
+  # Cheap, fast quality gates first — run in parallel, fail fast
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint (ESLint)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '26.13.0'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-
       - run: npm ci
-
       - name: Lint
         run: npm run lint:check
 
+  prettier:
+    name: Format check (Prettier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
       - name: Prettier check
         run: npm run prettier:check
 
-      # Known, documented gaps (docs/TECHNICAL_DEBT.md #1 and #13) mean build
-      # and test are not yet a clean gate: the auth feature's db service layer
-      # was never implemented (out of scope for this hygiene pass), and a few
-      # suites are Node-version-dependent. Run both for real signal, but don't
-      # fail the workflow on them until that gap is closed.
-      - name: Build (known gap, see docs/TECHNICAL_DEBT.md #1)
-        id: build
-        continue-on-error: true
-        run: npm run build
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test (known gaps, see docs/TECHNICAL_DEBT.md #1 and #13)
-        id: test
-        continue-on-error: true
-        run: npm test
+  # ---------------------------------------------------------------------------
+  # Type-check (tsc) — separate job so it can run in parallel with lint/format
+  # ---------------------------------------------------------------------------
+  typecheck:
+    name: Type-check (tsc)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Type-check
+        run: npx tsc --noEmit --project tsconfig.json
 
-      - name: Flag non-blocking failures
-        if: steps.build.outcome == 'failure' || steps.test.outcome == 'failure'
+  # ---------------------------------------------------------------------------
+  # Test in Docker (the real, container-verified test gate)
+  # ---------------------------------------------------------------------------
+  test:
+    name: Test (Docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [lint, prettier, secret-scan, typecheck]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Build test stage image
+        run: docker build --target test -t ${{ env.IMAGE_NAME }}:test .
+      - name: Run tests
+        run: docker run --rm ${{ env.IMAGE_NAME }}:test
+
+  # ---------------------------------------------------------------------------
+  # Build stage (tsc compile) — verifies the app can produce a runtime artifact
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build (tsc)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint, prettier, secret-scan, typecheck]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Build build stage image
+        run: docker build --target build -t ${{ env.IMAGE_NAME }}:build .
+
+  # ---------------------------------------------------------------------------
+  # Dependency vulnerability scan (npm audit) — runs in parallel with build/test
+  # ---------------------------------------------------------------------------
+  dep-audit:
+    name: Dependency audit (npm audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint, prettier, secret-scan, typecheck]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Audit (production deps only)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+  # ---------------------------------------------------------------------------
+  # Container image vulnerability scan (docker scout) — on prod-deps stage
+  # ---------------------------------------------------------------------------
+  image-scan:
+    name: Image scan (Docker Scout)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint, prettier, secret-scan, typecheck]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Build prod-deps stage
+        run: docker build --target prod-deps -t ${{ env.IMAGE_NAME }}:prod-deps .
+      - name: Scan image
+        run: docker scout cves ${{ env.IMAGE_NAME }}:prod-deps --exit-code --only-severity critical,high
+        continue-on-error: true
+
+  # ---------------------------------------------------------------------------
+  # Full Docker build validation (runtime stage) — only on main/tags, not fork PRs
+  # ---------------------------------------------------------------------------
+  docker-build:
+    name: Docker build (runtime)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [test, build]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Build runtime image
+        run: docker build --target runtime -t ${{ env.IMAGE_NAME }}:runtime .
+      - name: Validate image runs
         run: |
-          echo "::warning::build=${{ steps.build.outcome }} test=${{ steps.test.outcome }} — expected failures documented in docs/TECHNICAL_DEBT.md #1/#13, not gating CI. If these ever pass cleanly, remove the continue-on-error here."
+          docker run --rm -d --name smoke-test -p 5000:5000 ${{ env.IMAGE_NAME }}:runtime
+          sleep 5
+          curl -f http://localhost:5000/health/live || (docker logs smoke-test && exit 1)
+          docker stop smoke-test
+
+  # ---------------------------------------------------------------------------
+  # Publish to GHCR — only on tags, from protected branch
+  # ---------------------------------------------------------------------------
+  publish:
+    name: Publish (GHCR)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [docker-build]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Build and push
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
