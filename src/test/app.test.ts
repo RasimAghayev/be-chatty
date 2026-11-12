@@ -24,17 +24,15 @@ describe('Application', () => {
     app = new Application();
   });
 
-  it('should initialize successfully', async () => {
+  it('TC_APP_BOOTSTRAP_001 initializes config, database, and server', async () => {
     await app.initialize();
-
-    expect(databaseConnection).toHaveBeenCalled();
-
-    // Cast ChattyServer to the mocked version
-    const ChattyServerMock = ChattyServer as jest.MockedClass<typeof ChattyServer>;
-    expect(ChattyServerMock.prototype.start).toHaveBeenCalled();
 
     expect(config.validateConfig).toHaveBeenCalled();
     expect(config.cloudinaryConfig).toHaveBeenCalled();
+    expect(databaseConnection).toHaveBeenCalled();
+    expect(ChattyServer).toHaveBeenCalledTimes(1);
+    const serverInstance = (ChattyServer as jest.Mock).mock.results[0].value;
+    expect(serverInstance.start).toHaveBeenCalled();
   });
 
   // it('should handle database connection errors', async () => {
