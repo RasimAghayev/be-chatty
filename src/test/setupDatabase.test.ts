@@ -20,16 +20,13 @@ describe('setupDatabase', () => {
     jest.clearAllMocks();
   });
 
-  it('should connect to the database successfully and initialize Redis', async () => {
+  it('TC_INFRA_DB_CONNECT_001 connects to MongoDB and Redis', async () => {
     (mongoose.connect as jest.Mock).mockResolvedValueOnce(true);
     (redisConnection.connect as jest.Mock).mockResolvedValueOnce(true);
 
     await setupDatabase();
 
-    expect(mongoose.connect).toHaveBeenCalledWith(config.DATABASE_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    expect(mongoose.connect).toHaveBeenCalledWith(`${config.DATABASE_URL}`);
     expect(redisConnection.connect).toHaveBeenCalled();
     expect(mockLogger.info).toHaveBeenCalledWith('Database connected successfully');
   });
