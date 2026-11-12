@@ -50,3 +50,17 @@ Full verification evidence: `projects/info/state/handoff/6/be-chatty.md`. Baseli
 ### Dependency-bot PRs
 
 Closed 10 open Renovate PRs (#96-105) as superseded by the larger major bumps above; 0 open PRs remain.
+
+## Phase 9 — hardening (2026-11-12)
+
+### Changed
+
+- `src/setupServer.ts`: disabled `x-powered-by`; session cookie hardened with `httpOnly: true` and `sameSite: 'lax'` (existing signed keys and non-development `secure` behavior preserved); Express 5-compatible terminal 404 handler; generic 500 JSON for unexpected non-custom errors (no internal error leakage).
+- `src/routes.ts`: added `GET /health`, `/health/live`, `/health/ready`.
+- `Dockerfile`, `docker-compose.yml`: container/compose health probes now use `/health/live`.
+- `docs/SECURITY_REVIEW.md`: added Phase 9 security/hardening review (OWASP-oriented checklist, controls, residual risks).
+
+### Verification
+
+- `make lint` (Docker): exit 0.
+- `make verify` (Docker): exit 2, same pre-existing red signature as Phase 5-8 baseline (`Test Suites: 11 failed, 7 passed, 18 total`; `Tests: 2 failed, 43 passed, 45 total`; build/runtime blocked by missing `@service/db/{auth,user}.service`).

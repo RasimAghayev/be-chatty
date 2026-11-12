@@ -55,7 +55,7 @@ services:
           'CMD',
           'node',
           '-e',
-          "require('http').get({host:'127.0.0.1',port:5000,path:'/api/v1'},r=>{process.exit(r.statusCode<500?0:1)}).on('error',()=>process.exit(1))",
+          "require('http').get({host:'127.0.0.1',port:5000,path:'/health/live'},r=>{process.exit(r.statusCode<500?0:1)}).on('error',()=>process.exit(1))",
         ]
       interval: 10s
       timeout: 3s
