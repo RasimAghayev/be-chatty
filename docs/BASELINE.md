@@ -371,3 +371,33 @@ major; a BullMQ migration is a deliberate future decision).
 3. `express` 4 -> 5's path-to-regexp v8 route-matching changes were checked against this repo's route
    definitions (no wildcard/regex routes, no behavior change observed) — worth a second look if Phase 8/9
    add new route patterns.
+
+---
+
+# Phase 9 (`hardener`) — security, hardening, config, and probe alignment (2026-11-12)
+
+Performed in `projects/worktrees/be-chatty` on branch `phase-9/hardening` from `origin/main` (`0e62431`), lock `projects/info/state/locks/be-chatty.lock` held by `phase-9-hardener`.
+
+## Baseline (captured before changes)
+
+`make verify` (Docker) — exit 2 (pre-existing red):
+- `docker build --target test`: `Test Suites: 11 failed, 7 passed, 18 total`, `Tests: 2 failed, 43 passed, 45 total` (same named failing suites/root causes as Phase 5-8: 9 suites blocked by missing `@service/db/{auth,user}.service`, 1 empty stub suite, 2 pre-existing test-design failures in `setupDatabase.test.ts` and `app.test.ts`).
+- `docker build --target build` / runtime: blocked by the same documented P0 TS2307 gap (`docs/TECHNICAL_DEBT.md` #1).
+- `make lint`: exit 0.
+
+## Changes
+
+- `src/setupServer.ts`: disabled `x-powered-by`; cookie session adds `httpOnly: true` and `sameSite: 'lax'` (kept existing `secure` non-development behavior and signed keys); replaced Express 4-style `app.all('*')` catch-all with terminal `app.use(...)` 404 handler for Express 5/path-to-regexp v8 compatibility; unexpected non-`CustomError` failures now log and return generic `500 Internal server error` JSON when headers not sent.
+- `src/routes.ts`: added explicit `GET /health`, `/health/live`, `/health/ready` (200 JSON).
+- `Dockerfile`, `docker-compose.yml`: healthchecks aligned to `/health/live` instead of `/api/v1` 404 proxy.
+- `docs/SECURITY_REVIEW.md`: Phase 9 OWASP-oriented checklist, applied controls, residual risks.
+
+## Verification (after changes)
+
+| Command | Exit | Result |
+|---|---:|---|
+| `make lint` (Docker) | 0 | clean |
+| `docker build --target test` | 1 | same signature: `Test Suites: 11 failed, 7 passed, 18 total`; `Tests: 2 failed, 43 passed, 45 total` |
+| `make verify` | 2 | same pre-existing red baseline (test/build/runtime blocked by documented gaps) |
+
+No regression in suite/test signature vs baseline. No secrets added/committed.
