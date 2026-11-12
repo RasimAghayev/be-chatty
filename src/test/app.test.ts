@@ -1,38 +1,36 @@
-import { Application } from "@root/app";
-import databaseConnection from "@root/setupDatabase";
-import { ChattyServer } from "@root/setupServer";
-import { config } from "@root/config";
+import { Application } from '@root/app';
+import databaseConnection from '@root/setupDatabase';
+import { ChattyServer } from '@root/setupServer';
+import { config } from '@root/config';
 
 // Mock the dependencies
-jest.mock("@root/setupDatabase", () => jest.fn().mockResolvedValue(true));
-jest.mock("@root/setupServer", () => ({
+jest.mock('@root/setupDatabase', () => jest.fn().mockResolvedValue(true));
+jest.mock('@root/setupServer', () => ({
   ChattyServer: jest.fn().mockImplementation(() => ({
     start: jest.fn().mockResolvedValue(true),
   })),
 }));
-jest.mock("@root/config", () => ({
+jest.mock('@root/config', () => ({
   config: {
     validateConfig: jest.fn(),
     cloudinaryConfig: jest.fn(),
   },
 }));
 
-describe("Application", () => {
+describe('Application', () => {
   let app: Application;
 
   beforeEach(() => {
     app = new Application();
   });
 
-  it("should initialize successfully", async () => {
+  it('should initialize successfully', async () => {
     await app.initialize();
 
     expect(databaseConnection).toHaveBeenCalled();
 
     // Cast ChattyServer to the mocked version
-    const ChattyServerMock = ChattyServer as jest.MockedClass<
-      typeof ChattyServer
-    >;
+    const ChattyServerMock = ChattyServer as jest.MockedClass<typeof ChattyServer>;
     expect(ChattyServerMock.prototype.start).toHaveBeenCalled();
 
     expect(config.validateConfig).toHaveBeenCalled();

@@ -1,6 +1,6 @@
-import { createClient } from "redis";
-import Logger from "bunyan";
-import { config } from "@root/config";
+import { createClient } from 'redis';
+import Logger from 'bunyan';
+import { config } from '@root/config';
 
 export type RedisClient = ReturnType<typeof createClient>;
 
@@ -14,7 +14,7 @@ export abstract class BaseCache {
     this.cacheError();
   }
   private cacheError(): void {
-    this.client.on("error", (error: unknown) => {
+    this.client.on('error', (error: unknown) => {
       this.log.error(error);
     });
   }

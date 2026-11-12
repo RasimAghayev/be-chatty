@@ -1,20 +1,20 @@
-import { Application } from "express";
-import http from "http";
-import { Server } from "socket.io";
-import { createClient } from "redis";
-import { createAdapter } from "@socket.io/redis-adapter";
-import Logger from "bunyan";
-import { config } from "@root/config";
-import { ChattyServer } from "@root/setupServer";
+import { Application } from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import { createClient } from 'redis';
+import { createAdapter } from '@socket.io/redis-adapter';
+import Logger from 'bunyan';
+import { config } from '@root/config';
+import { ChattyServer } from '@root/setupServer';
 
 // Mocks
-jest.mock("http");
-jest.mock("express");
-jest.mock("socket.io");
-jest.mock("redis");
-jest.mock("@socket.io/redis-adapter");
-jest.mock("bunyan");
-jest.mock("@root/routes");
+jest.mock('http');
+jest.mock('express');
+jest.mock('socket.io');
+jest.mock('redis');
+jest.mock('@socket.io/redis-adapter');
+jest.mock('bunyan');
+jest.mock('@root/routes');
 
 // Create mock implementations
 const mockListen = jest.fn();
@@ -45,7 +45,7 @@ const mockLog = {
 (createAdapter as jest.Mock).mockImplementation(mockCreateAdapter);
 (config.createLogger as jest.Mock) = jest.fn().mockReturnValue(mockLog);
 
-describe("ChattyServer", () => {
+describe('ChattyServer', () => {
   let app: Application;
   let chattyServer: ChattyServer;
 
@@ -55,21 +55,16 @@ describe("ChattyServer", () => {
     chattyServer = new ChattyServer(app);
   });
 
-  it("should start the server and setup socket.io", async () => {
+  it('should start the server and setup socket.io', async () => {
     await chattyServer.start();
 
     expect(mockCreateServer).toHaveBeenCalledWith(app);
     expect(mockCreateSocketIO).toHaveBeenCalledWith(mockCreateServer());
-    expect(mockListen).toHaveBeenCalledWith(
-      config.SERVER_PORT,
-      expect.any(Function),
-    );
-    expect(mockLog.info).toHaveBeenCalledWith(
-      `Server is running on port ${config.SERVER_PORT}`,
-    );
+    expect(mockListen).toHaveBeenCalledWith(config.SERVER_PORT, expect.any(Function));
+    expect(mockLog.info).toHaveBeenCalledWith(`Server is running on port ${config.SERVER_PORT}`);
   });
 
-  it("should setup socket.io connections", async () => {
+  it('should setup socket.io connections', async () => {
     const mockHttpServer: http.Server = {} as http.Server;
     const mockSocketIO = {
       adapter: jest.fn(),
@@ -81,14 +76,14 @@ describe("ChattyServer", () => {
       chattyServer as unknown as {
         createSocketIO: (httpServer: http.Server) => Promise<Server>;
       }
-    )["createSocketIO"](mockHttpServer);
+    )['createSocketIO'](mockHttpServer);
 
     expect(Server).toHaveBeenCalledWith(mockHttpServer, expect.any(Object));
     expect(mockSocketIO.adapter).toHaveBeenCalled();
   });
 
-  it("should handle errors during server start", async () => {
-    const mockError = new Error("Server start error");
+  it('should handle errors during server start', async () => {
+    const mockError = new Error('Server start error');
     mockCreateSocketIO.mockRejectedValueOnce(mockError);
     await chattyServer.start();
 

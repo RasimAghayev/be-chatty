@@ -1,20 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { JoiRequestValidationError } from "@global/helpers/error-handler";
-import { Request } from "express";
-import { ObjectSchema } from "joi";
+import { JoiRequestValidationError } from '@global/helpers/error-handler';
+import { Request } from 'express';
+import { ObjectSchema } from 'joi';
 
-type IJoiDecorator = (
-  target: any,
-  key: string,
-  descriptor: PropertyDescriptor,
-) => void;
+type IJoiDecorator = (target: any, key: string, descriptor: PropertyDescriptor) => void;
 
 export function joiValidation(schema: ObjectSchema): IJoiDecorator {
-  return function (
-    _target: any,
-    _key: string,
-    descriptor: PropertyDescriptor,
-  ): PropertyDescriptor | void {
+  return function (_target: any, _key: string, descriptor: PropertyDescriptor): PropertyDescriptor | void {
     const originalMethod = descriptor.value;
     descriptor.value = async function (...args: any[]) {
       const req: Request = args[0];

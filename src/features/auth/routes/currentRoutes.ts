@@ -1,6 +1,6 @@
-import { CurrentUser } from "@auth/controllers/current-user";
-import { authMiddleware } from "@global/helpers/auth-middleware";
-import express, { Router } from "express";
+import { CurrentUser } from '@auth/controllers/current-user';
+import { authMiddleware } from '@global/helpers/auth-middleware';
+import express, { Router } from 'express';
 
 class CurrentUserRoutes {
   private router: Router;
@@ -10,11 +10,7 @@ class CurrentUserRoutes {
   }
 
   public routes(): Router {
-    this.router.get(
-      "/me",
-      authMiddleware.checkAuthenticate,
-      CurrentUser.prototype.read,
-    );
+    this.router.get('/me', authMiddleware.checkAuthenticate, CurrentUser.prototype.read);
     return this.router;
   }
 }

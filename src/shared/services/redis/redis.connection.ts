@@ -1,12 +1,12 @@
-import Logger from "bunyan";
-import { config } from "@root/config";
-import { BaseCache } from "@service/redis/base.cache";
+import Logger from 'bunyan';
+import { config } from '@root/config';
+import { BaseCache } from '@service/redis/base.cache';
 
-const log: Logger = config.createLogger("redisConnection");
+const log: Logger = config.createLogger('redisConnection');
 
 class RedisConnection extends BaseCache {
   constructor() {
-    super("redisConnection");
+    super('redisConnection');
   }
 
   async connect(): Promise<void> {
