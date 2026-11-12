@@ -1,21 +1,25 @@
-# Security Policy
+﻿# Security Policy
 
-## Supported Versions
+## Reporting a vulnerability
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+If you discover a security vulnerability, do not open a public issue with exploit details.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+- Report it privately to the repository maintainer/owner through GitHub's private vulnerability reporting or a direct private channel if available.
+- Include a clear description, affected components/paths, reproduction steps or proof of concept (sanitized), and potential impact.
+- Do not include secrets, tokens, credentials, or personal data in reports.
 
-## Reporting a Vulnerability
+## Scope and expectations
 
-Use this section to tell people how to report a vulnerability.
+- This is a course-derived backend repository with known, documented implementation gaps and a red Docker verification baseline (`docs/BASELINE.md`, `docs/TECHNICAL_DEBT.md`). Security reports are still welcome, but fixes may depend on broader remediation work.
+- Supported versions: no formal release/support policy is defined. Reports against the default branch (`main`) are most useful.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+## Response targets
+
+Best-effort response targets (not guaranteed):
+
+- Initial acknowledgement: within 7 days
+- Triage/update: as information becomes available
+
+## Disclosure
+
+Please allow reasonable time for investigation and remediation before public disclosure. Coordinate disclosure timing with the maintainer when possible.
