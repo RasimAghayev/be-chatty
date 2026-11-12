@@ -129,16 +129,11 @@ USER app
 
 EXPOSE 5000
 
-# No /health endpoint exists in this repo yet (adding one is Phase 9's job
-# per PROMPT.md Phase 9 item 3 — dual-mode independence / health probes).
-# As the most that is available without touching application code (out of
-# this phase's Docker/Make-only scope), this HEALTHCHECK treats "the HTTP
-# server answers at all" as liveness: GET /api/v1 always 404s through the
-# app's own catch-all handler (see src/setupServer.ts globalErrorHandler),
-# which still proves the process is up and the event loop is responsive.
-# Any response below 500 counts as healthy; a hung/crashed process times out
-# or refuses the connection and correctly reports unhealthy.
+# No /health endpoint existed before Phase 9; health probes now use the
+# explicit liveness endpoint added during hardening. Any response below 500
+# counts as healthy; a hung/crashed process times out or refuses the
+# connection and correctly reports unhealthy.
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
-  CMD node -e "require('http').get({host:'127.0.0.1',port:process.env.SERVER_PORT||5000,path:'/api/v1'},r=>{process.exit(r.statusCode<500?0:1)}).on('error',()=>process.exit(1))"
+  CMD node -e "require('http').get({host:'127.0.0.1',port:process.env.SERVER_PORT||5000,path:'/health/live'},r=>{process.exit(r.statusCode<500?0:1)}).on('error',()=>process.exit(1))"
 
 ENTRYPOINT ["node", "build/app.js"]

@@ -32,12 +32,15 @@ export class ChattyServer {
   }
 
   private securityMiddleware(app: Application): void {
+    app.disable('x-powered-by');
     app.use(
       cookieSession({
         name: 'session',
         keys: [config.SECRET_KEY_ONE!, config.SECRET_KEY_TWO!],
         maxAge: 7 * 24 * 3600000, // 7 days
         secure: config.NODE_ENV !== 'development',
+        httpOnly: true,
+        sameSite: 'lax',
       })
     );
     app.use(hpp());
@@ -74,7 +77,7 @@ export class ChattyServer {
   }
 
   private globalErrorHandler(app: Application): void {
-    app.all('*', (req: Request, res: Response) => {
+    app.use((req: Request, res: Response) => {
       res.status(HTTP_STATUS.NOT_FOUND).json({ message: `Route ${req.originalUrl} not found` });
     });
 
@@ -83,7 +86,10 @@ export class ChattyServer {
       if (error instanceof CustomError) {
         return res.status(error.statusCode).send(error.serializeErrors());
       }
-      next();
+      if (res.headersSent) {
+        return next(error);
+      }
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Internal server error' });
     });
   }
 
