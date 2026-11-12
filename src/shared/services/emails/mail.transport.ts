@@ -1,9 +1,9 @@
-import nodemailer from 'nodemailer';
-import Mail from 'nodemailer/lib/mailer';
-import Logger from 'bunyan';
-import sendGridMail from '@sendgrid/mail';
-import { config } from '@root/config';
-import { BadRequestError } from '@global/helpers/error-handler';
+import nodemailer from "nodemailer";
+import Mail from "nodemailer/lib/mailer";
+import Logger from "bunyan";
+import sendGridMail from "@sendgrid/mail";
+import { config } from "@root/config";
+import { BadRequestError } from "@global/helpers/error-handler";
 
 interface IMailOptions {
   from: string;
@@ -12,13 +12,17 @@ interface IMailOptions {
   html: string;
 }
 
-const log: Logger = config.createLogger('mailOptions');
+const log: Logger = config.createLogger("mailOptions");
 
 sendGridMail.setApiKey(config.SENDERGRID_API_KEY!);
 
 class MailTransport {
-  public async sendEmail(receiverEmail: string, subject: string, body: string): Promise<void> {
-    if (config.NODE_ENV === 'production') {
+  public async sendEmail(
+    receiverEmail: string,
+    subject: string,
+    body: string,
+  ): Promise<void> {
+    if (config.NODE_ENV === "production") {
       await this.productionEmailSender(receiverEmail, subject, body);
       return;
     }
@@ -30,7 +34,11 @@ class MailTransport {
     //   await this.productionEmailSender(receiverEmail, subject, body);
     // }
   }
-  private async developmentEmailSender(receiverEmail: string, subject: string, body: string): Promise<void> {
+  private async developmentEmailSender(
+    receiverEmail: string,
+    subject: string,
+    body: string,
+  ): Promise<void> {
     const transporter: Mail = nodemailer.createTransport({
       host: config.SENDER_HOST! as string,
       port: config.SENDER_PORT! as number,
@@ -50,13 +58,17 @@ class MailTransport {
 
     try {
       await transporter.sendMail(mailOptions);
-      log.info('Development email sent successfully');
+      log.info("Development email sent successfully");
     } catch (error) {
-      log.error('Error sending email', error);
-      throw new BadRequestError('Email sending email');
+      log.error("Error sending email", error);
+      throw new BadRequestError("Email sending email");
     }
   }
-  private async productionEmailSender(receiverEmail: string, subject: string, body: string): Promise<void> {
+  private async productionEmailSender(
+    receiverEmail: string,
+    subject: string,
+    body: string,
+  ): Promise<void> {
     const mailOptions: IMailOptions = {
       from: `Chatty App <${config.SENDER_EMAIL!}>` as string,
       to: receiverEmail,
@@ -66,10 +78,10 @@ class MailTransport {
 
     try {
       await sendGridMail.send(mailOptions);
-      log.info('Production email sent successfully');
+      log.info("Production email sent successfully");
     } catch (error) {
-      log.error('Error sending email', error);
-      throw new BadRequestError('Email sending email');
+      log.error("Error sending email", error);
+      throw new BadRequestError("Email sending email");
     }
   }
 }

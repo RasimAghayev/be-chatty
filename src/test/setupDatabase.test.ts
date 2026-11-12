@@ -1,11 +1,11 @@
-import mongoose from 'mongoose';
-import Logger from 'bunyan';
-import { config } from '@root/config';
-import { redisConnection } from '@service/redis/redis.connection';
-import setupDatabase from '@root/setupDatabase';
+import mongoose from "mongoose";
+import Logger from "bunyan";
+import { config } from "@root/config";
+import { redisConnection } from "@service/redis/redis.connection";
+import setupDatabase from "@root/setupDatabase";
 
-jest.mock('mongoose');
-jest.mock('@service/redis/redis.connection');
+jest.mock("mongoose");
+jest.mock("@service/redis/redis.connection");
 
 const mockLogger = {
   info: jest.fn(),
@@ -13,14 +13,16 @@ const mockLogger = {
   warn: jest.fn(),
 };
 
-(config as unknown as { createLogger: jest.Mock }).createLogger = jest.fn(() => mockLogger as unknown as Logger);
+(config as unknown as { createLogger: jest.Mock }).createLogger = jest.fn(
+  () => mockLogger as unknown as Logger,
+);
 
-describe('setupDatabase', () => {
+describe("setupDatabase", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should connect to the database successfully and initialize Redis', async () => {
+  it("should connect to the database successfully and initialize Redis", async () => {
     (mongoose.connect as jest.Mock).mockResolvedValueOnce(true);
     (redisConnection.connect as jest.Mock).mockResolvedValueOnce(true);
 
@@ -31,7 +33,9 @@ describe('setupDatabase', () => {
       useUnifiedTopology: true,
     });
     expect(redisConnection.connect).toHaveBeenCalled();
-    expect(mockLogger.info).toHaveBeenCalledWith('Database connected successfully');
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      "Database connected successfully",
+    );
   });
 
   // it('should handle database connection failure', async () => {

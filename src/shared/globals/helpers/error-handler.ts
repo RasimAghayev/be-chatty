@@ -1,4 +1,4 @@
-import HTTP_STATUS from 'http-status-codes';
+import HTTP_STATUS from "http-status-codes";
 
 export interface IErrorResponse {
   message: string;
@@ -30,7 +30,7 @@ export abstract class CustomError extends Error {
 
 export class JoiRequestValidationError extends CustomError {
   statusCode = HTTP_STATUS.BAD_REQUEST;
-  status = 'error';
+  status = "error";
 
   constructor(message: string) {
     super(message);
@@ -38,7 +38,7 @@ export class JoiRequestValidationError extends CustomError {
 }
 export class BadRequestError extends CustomError {
   statusCode = HTTP_STATUS.BAD_REQUEST;
-  status = 'error';
+  status = "error";
 
   constructor(message: string) {
     super(message);
@@ -46,7 +46,7 @@ export class BadRequestError extends CustomError {
 }
 export class NotFoundError extends CustomError {
   statusCode = HTTP_STATUS.NOT_FOUND;
-  status = 'error';
+  status = "error";
   constructor(message: string) {
     super(message);
   }
@@ -54,7 +54,7 @@ export class NotFoundError extends CustomError {
 
 export class NotAuthorizedError extends CustomError {
   statusCode = HTTP_STATUS.UNAUTHORIZED;
-  status = 'error';
+  status = "error";
   constructor(message: string) {
     super(message);
   }
@@ -62,28 +62,28 @@ export class NotAuthorizedError extends CustomError {
 
 export class FileToLargeError extends CustomError {
   statusCode = HTTP_STATUS.REQUEST_TOO_LONG;
-  status = 'error';
+  status = "error";
   constructor(message: string) {
     super(message);
   }
 }
 export class FileUploadError extends CustomError {
   statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
-  status = 'error';
+  status = "error";
   constructor(message: string) {
     super(message);
   }
 }
 export class ServerError extends CustomError {
   statusCode = HTTP_STATUS.SERVICE_UNAVAILABLE;
-  status = 'error';
+  status = "error";
   constructor(message: string) {
     super(message);
   }
 }
 export class InternalServerError extends CustomError {
   statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
-  status = 'error';
+  status = "error";
   constructor(message: string) {
     super(message);
   }
@@ -91,7 +91,7 @@ export class InternalServerError extends CustomError {
 
 export class DatabaseConnectionError extends CustomError {
   statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
-  status = 'error';
+  status = "error";
   constructor(message: string) {
     super(message);
   }

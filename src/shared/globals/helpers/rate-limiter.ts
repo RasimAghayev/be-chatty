@@ -1,5 +1,5 @@
-import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
-import HTTP_STATUS from 'http-status-codes';
+import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
+import HTTP_STATUS from "http-status-codes";
 
 /**
  * App-wide rate limiter (CodeQL js/missing-rate-limiting).
@@ -14,7 +14,7 @@ export const apiLimiter: RateLimitRequestHandler = rateLimit({
   limit: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many requests. Please try again later.' },
+  message: { message: "Too many requests. Please try again later." },
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
 });
 
@@ -29,6 +29,6 @@ export const authLimiter: RateLimitRequestHandler = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many attempts. Please try again later.' },
+  message: { message: "Too many attempts. Please try again later." },
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
 });

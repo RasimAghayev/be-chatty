@@ -1,6 +1,6 @@
-import dotenv from 'dotenv';
-import bunyan from 'bunyan';
-import cloudinary from 'cloudinary';
+import dotenv from "dotenv";
+import bunyan from "bunyan";
+import cloudinary from "cloudinary";
 
 dotenv.config();
 
@@ -23,28 +23,44 @@ class Config {
   public SENDERGRID_API_KEY: string | undefined;
   public SENDERGRID_SENDER: string | undefined;
 
-  private readonly DEFAULT_SERVER_PORT: number = Number(process.env.SERVER_PORT) || 5000;
-  private readonly DEFAULT_NODE_ENV: string = process.env.NODE_ENV || 'development';
+  private readonly DEFAULT_SERVER_PORT: number =
+    Number(process.env.SERVER_PORT) || 5000;
+  private readonly DEFAULT_NODE_ENV: string =
+    process.env.NODE_ENV || "development";
 
-  private readonly DEFAULT_JWT_TOKEN: string = process.env.JWT_TOKEN || 'ThisIsATokenFromMe';
-  private readonly DEFAULT_SECRET_KEY_ONE: string = process.env.SECRET_KEY_ONE || 'ThisIsaSecretCookieKeyOne';
-  private readonly DEFAULT_SECRET_KEY_TWO: string = process.env.SECRET_KEY_TWO || 'ThisIsaSecretCookieKeyTwo';
+  private readonly DEFAULT_JWT_TOKEN: string =
+    process.env.JWT_TOKEN || "ThisIsATokenFromMe";
+  private readonly DEFAULT_SECRET_KEY_ONE: string =
+    process.env.SECRET_KEY_ONE || "ThisIsaSecretCookieKeyOne";
+  private readonly DEFAULT_SECRET_KEY_TWO: string =
+    process.env.SECRET_KEY_TWO || "ThisIsaSecretCookieKeyTwo";
 
   private readonly DEFAULT_DATABASE_URL: string =
-    process.env.DATABASE_URL || 'mongodb://root:root@localhost:27017/chattyapp?authSource=admin';
-  private readonly DEFAULT_CLIENT_URL: string = process.env.CLIENT_URL || 'http://localhost:3000';
-  private readonly DEFAULT_REDIS_URL: string = process.env.REDIS_URL || 'redis://default:eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81@localhost:6379';
+    process.env.DATABASE_URL ||
+    "mongodb://root:root@localhost:27017/chattyapp?authSource=admin";
+  private readonly DEFAULT_CLIENT_URL: string =
+    process.env.CLIENT_URL || "http://localhost:3000";
+  private readonly DEFAULT_REDIS_URL: string =
+    process.env.REDIS_URL ||
+    "redis://default:eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81@localhost:6379";
 
-  private readonly DEFAULT_CLOUD_NAME: string = process.env.CLOUD_NAME || '';
-  private readonly DEFAULT_CLOUD_API_KEY: string = process.env.CLOUD_API_KEY || '';
-  private readonly DEFAULT_CLOUD_API_SECRET: string = process.env.CLOUD_API_SECRET || '';
+  private readonly DEFAULT_CLOUD_NAME: string = process.env.CLOUD_NAME || "";
+  private readonly DEFAULT_CLOUD_API_KEY: string =
+    process.env.CLOUD_API_KEY || "";
+  private readonly DEFAULT_CLOUD_API_SECRET: string =
+    process.env.CLOUD_API_SECRET || "";
 
-  private readonly DEFAULT_SENDER_HOST: string = process.env.SENDER_HOST || '';
-  private readonly DEFAULT_SENDER_PORT: number = Number(process.env.SENDER_PORT) || 587;
-  private readonly DEFAULT_SENDER_EMAIL: string = process.env.SENDER_EMAIL || '';
-  private readonly DEFAULT_SENDER_EMAIL_PASSWORD: string = process.env.SENDER_EMAIL_PASSWORD || '';
-  private readonly DEFAULT_SENDERGRID_API_KEY: string = process.env.SENDERGRID_API_KEY || '';
-  private readonly DEFAULT_SENDERGRID_SENDER: string = process.env.SENDERGRID_SENDER || '';
+  private readonly DEFAULT_SENDER_HOST: string = process.env.SENDER_HOST || "";
+  private readonly DEFAULT_SENDER_PORT: number =
+    Number(process.env.SENDER_PORT) || 587;
+  private readonly DEFAULT_SENDER_EMAIL: string =
+    process.env.SENDER_EMAIL || "";
+  private readonly DEFAULT_SENDER_EMAIL_PASSWORD: string =
+    process.env.SENDER_EMAIL_PASSWORD || "";
+  private readonly DEFAULT_SENDERGRID_API_KEY: string =
+    process.env.SENDERGRID_API_KEY || "";
+  private readonly DEFAULT_SENDERGRID_SENDER: string =
+    process.env.SENDERGRID_SENDER || "";
   constructor() {
     this.SERVER_PORT = this.DEFAULT_SERVER_PORT;
     this.DATABASE_URL = this.DEFAULT_DATABASE_URL;
@@ -69,7 +85,7 @@ class Config {
     return bunyan.createLogger({
       name,
       src: false,
-      level: 'debug',
+      level: "debug",
     });
   }
   public validateConfig(): void {

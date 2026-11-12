@@ -1,5 +1,5 @@
-import mongoose, { Document } from 'mongoose';
-import { ObjectId } from 'mongodb';
+import mongoose, { Document } from "mongoose";
+import { ObjectId } from "mongodb";
 
 export interface IUserDocument extends Document {
   authId: string | ObjectId;

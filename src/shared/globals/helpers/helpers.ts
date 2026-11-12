@@ -1,4 +1,4 @@
-import os from 'os';
+import os from "os";
 
 export class Helpers {
   /**
@@ -17,20 +17,23 @@ export class Helpers {
         continue;
       }
       for (const details of nic) {
-        if (details.family === 'IPv4' && !details.internal) {
+        if (details.family === "IPv4" && !details.internal) {
           return details.address;
         }
       }
     }
-    return '127.0.0.1';
+    return "127.0.0.1";
   }
 
   static firstLetterUppercase(str: string): string {
     const valueString = str.toLowerCase();
     return valueString
-      .split(' ')
-      .map((value: string) => `${value.charAt(0).toUpperCase()}${value.slice(1).toLowerCase()}`)
-      .join(' ');
+      .split(" ")
+      .map(
+        (value: string) =>
+          `${value.charAt(0).toUpperCase()}${value.slice(1).toLowerCase()}`,
+      )
+      .join(" ");
   }
 
   static lowerCase(str: string): string {
@@ -38,8 +41,8 @@ export class Helpers {
   }
 
   static generateRandomIntegers(integerLength: number): number {
-    const characters = '0123456789';
-    let result = ' ';
+    const characters = "0123456789";
+    let result = " ";
     const charactersLength = characters.length;
     for (let i = 0; i < integerLength; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -54,9 +57,11 @@ export class Helpers {
    * @throws {TypeError} If jsonString is null or undefined.
    * @return {Record<string, unknown> | string} The parsed JSON object or the original string.
    */
-  static parseJson(jsonString: string | null | undefined): Record<string, unknown> | string {
+  static parseJson(
+    jsonString: string | null | undefined,
+  ): Record<string, unknown> | string {
     if (jsonString === null || jsonString === undefined) {
-      throw new TypeError('jsonString cannot be null or undefined');
+      throw new TypeError("jsonString cannot be null or undefined");
     }
 
     try {
