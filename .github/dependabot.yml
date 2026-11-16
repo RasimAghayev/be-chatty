@@ -1,0 +1,59 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps-dev)"
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      production-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+        update-types:
+          - "patch"
+          - "minor"
+      development-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+        update-types:
+          - "patch"
+          - "minor"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci(deps)"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci(deps)"
+    labels:
+      - "dependencies"
+      - "github-actions"
